@@ -1,10 +1,21 @@
-# nback
-n-back task
+# bun-react-template
 
-## Objective
-nback task実装
+To install dependencies:
 
-## Key Concerns
-- React, PWA (完全offline対応)
-- Game自体は純粋tsで完成させ、UIは後付け
-- state一元管理・
+```bash
+bun install
+```
+
+To start a development server:
+
+```bash
+bun dev
+```
+
+To run for production:
+
+```bash
+bun start
+```
+
+This project was created using `bun init` in bun v1.3.14. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.

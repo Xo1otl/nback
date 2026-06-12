@@ -1,0 +1,20 @@
+{
+  "name": "bun-react-template",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun src/index.html",
+    "build": "NODE_ENV=production bun build ./src/index.html --outdir=dist --sourcemap --target=browser --minify --env='BUN_PUBLIC_*' && cp -r public/. dist/ && bun scripts/gen-sw.ts",
+    "preview": "bun scripts/preview.ts"
+  },
+  "dependencies": {
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/bun": "latest"
+  }
+}
