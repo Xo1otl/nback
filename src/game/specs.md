@@ -17,7 +17,7 @@ Total trials $T = N + \text{problemCount}$. Index 0.
 
 ## Events (Driver)
 
-No internal timers. Pure deterministic state machine. Fixed stimuli at start.
+No internal timers. Pure deterministic state machine.
 
 * **`respond(m, action, deltaTime)`:** Log: `[(action, deltaTime), ...]`. action: engage|disengage. deltaTime: ms from v-sync. Validate: responding, scored, mod enabled, deltaTime <= respondingDuration. Score via last valid event.
 * **`closeTrial`:** `responding(t)` $\rightarrow$ `feedback(t)`.
@@ -41,7 +41,6 @@ Independent per mod/trial.
 
 * **$t < N$:** Uniform from $O_m$.
 * **$t \geq N$:** Prob $p$ copy $t - N$. Else uniform $O_m \setminus \{\text{stimulus}[m][t - N]\}$.
-* **Actual prob:** $P(\text{match}) = p$
 
 ## Configuration & Validation
 
@@ -69,3 +68,5 @@ $$HR = \frac{H + 0.5}{H + M + 1}$$
 $$FAR = \frac{F + 0.5}{F + C + 1}$$
 $$d' = Z(HR) - Z(FAR)$$
 $$c = -\frac{Z(HR) + Z(FAR)}{2}$$
+
+Z(x) is the inverse CDF of the standard normal distribution.
