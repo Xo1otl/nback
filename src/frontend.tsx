@@ -11,9 +11,9 @@ import { App } from "./App";
 
 const elem = document.getElementById("root")!;
 const app = (
-  <StrictMode>
-    <App />
-  </StrictMode>
+	<StrictMode>
+		<App />
+	</StrictMode>
 );
 
 // https://bun.com/docs/bundler/hot-reloading#import-meta-hot-data
@@ -25,9 +25,9 @@ const app = (
 // dead-code-eliminated in dev — keeping the dev server free of stale-cache
 // headaches.
 if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch((err) => {
-      console.error("SW registration failed:", err);
-    });
-  });
+	window.addEventListener("load", () => {
+		navigator.serviceWorker.register("/sw.js").catch((err) => {
+			console.error("SW registration failed:", err);
+		});
+	});
 }
