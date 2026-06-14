@@ -27,7 +27,7 @@ No internal timers. Pure deterministic state machine.
 
 Independent streams. Each enabled mod requires config set $O_m \subseteq \text{canonical universe}$, $k_m = |O_m| \geq 2$.
 
-* **Position:** Grid cells ($\text{rows} \times \text{cols} \geq 2$).
+* **Position:** Coordinate IDs (e.g. r0c1).
 * **Color:** red, green, purple, black.
 * **Character:** 0–9, A, B, C, D, E, H, K, L, M, O.
 * **Shape:** triangle, square, pentagon, ellipse.
@@ -47,7 +47,7 @@ Independent per mod/trial.
 * **Core:** N (>=1), problemCount (>=1), p in (0, 1)
 * **Timing:** respondingDuration, feedbackDuration (affects driver only, not logic)
 * **Mods (>=1 enabled, k>=2 subset per mod, defaults=canonical):**
-* Position: enable | rows, cols (rows*cols>=2)
+* Position: enable | subset {coordinate IDs}
 * Color: enable | subset {red, green, purple, black}
 * Character: enable | subset {0-9, A-E, H, K-M, O}
 * Shape: enable | subset {triangle, square, pentagon, ellipse}
