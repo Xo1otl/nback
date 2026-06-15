@@ -369,10 +369,26 @@ export const CANONICAL_COLOR: OptionList = [
 ];
 
 export const CANONICAL_CHARACTER: OptionList = [
-	"0", "1", "2", "3", "4",
-	"5", "6", "7", "8", "9",
-	"A", "B", "C", "D", "E",
-	"H", "K", "L", "M", "O",
+	"0",
+	"1",
+	"2",
+	"3",
+	"4",
+	"5",
+	"6",
+	"7",
+	"8",
+	"9",
+	"A",
+	"B",
+	"C",
+	"D",
+	"E",
+	"H",
+	"K",
+	"L",
+	"M",
+	"O",
 ];
 
 export const CANONICAL_SHAPE: OptionList = [
@@ -383,8 +399,14 @@ export const CANONICAL_SHAPE: OptionList = [
 ];
 
 export const CANONICAL_AUDIO: OptionList = [
-	"A", "B", "C", "H",
-	"K", "L", "M", "O",
+	"A",
+	"B",
+	"C",
+	"H",
+	"K",
+	"L",
+	"M",
+	"O",
 ];
 
 export const CANONICAL_ANIMATION: OptionList = [
