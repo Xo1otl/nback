@@ -459,6 +459,79 @@ describe("respond folds the final action into SessionState", () => {
 	});
 });
 
+describe("scoring vocabulary (matchAt, outcomeOf, finalEngagedFrom)", () => {
+	const stimuli: game.StimulusTrace = [
+		{ trial: 0, values: [{ mod: game.MOD_COLOR, value: "red" }] },
+		{ trial: 1, values: [{ mod: game.MOD_COLOR, value: "red" }] },
+		{ trial: 2, values: [{ mod: game.MOD_COLOR, value: "green" }] },
+	];
+
+	test("matchAt compares a modality against its n-back lookback", () => {
+		expect(game.matchAt(stimuli, 1, 1, game.MOD_COLOR)).toBe(true); // red == red (t-1)
+		expect(game.matchAt(stimuli, 1, 2, game.MOD_COLOR)).toBe(false); // green != red
+		expect(game.matchAt(stimuli, 2, 2, game.MOD_COLOR)).toBe(false); // green != red (t-2)
+	});
+
+	test("matchAt is undefined on memorization trials and out-of-range lookbacks", () => {
+		expect(game.matchAt(stimuli, 1, 0, game.MOD_COLOR)).toBeUndefined(); // t < n
+		expect(game.matchAt(stimuli, 2, 1, game.MOD_COLOR)).toBeUndefined(); // t < n
+		expect(game.matchAt(stimuli, 1, 9, game.MOD_COLOR)).toBeUndefined(); // out of range
+	});
+
+	test("outcomeOf maps the 2x2 (match x engaged) confusion matrix", () => {
+		expect(game.outcomeOf(true, true)).toBe(game.OUTCOME_HIT);
+		expect(game.outcomeOf(true, false)).toBe(game.OUTCOME_MISS);
+		expect(game.outcomeOf(false, true)).toBe(game.OUTCOME_FALSE_ALARM);
+		expect(game.outcomeOf(false, false)).toBe(game.OUTCOME_CORRECT_REJECT);
+	});
+
+	test("finalEngagedFrom replays accepted events (last wins; default disengage)", () => {
+		const ev = (
+			action: game.ResponseAction,
+			result: game.EventResult,
+		): game.Responded => ({
+			type: "responded",
+			offset: 0,
+			mod: game.MOD_COLOR,
+			action,
+			result,
+			reason: "",
+		});
+		expect(game.finalEngagedFrom([], game.MOD_COLOR)).toBe(false);
+		expect(game.finalEngagedFrom([ev("engage", "accepted")], game.MOD_COLOR)).toBe(true);
+		// last accepted wins, and a non-accepted event does not flip the state
+		expect(
+			game.finalEngagedFrom([ev("engage", "accepted"), ev("disengage", "rejected")], game.MOD_COLOR),
+		).toBe(true);
+		expect(
+			game.finalEngagedFrom([ev("engage", "accepted"), ev("disengage", "accepted")], game.MOD_COLOR),
+		).toBe(false);
+	});
+
+	test("the live fold (isEngaged) and the log replay (finalEngagedFrom) agree", () => {
+		const spec = game.validateAndResolveConfig(simpleConfig({ n: 2, problemCount: 4 }));
+		let state: game.SessionState = {
+			phase: "responding",
+			trial: 2,
+			respondingOnset: 1000,
+			responses: [],
+		};
+		const accepted: game.Responded[] = [];
+		let offset = 1100;
+		for (const action of ["engage", "disengage", "engage"] as const) {
+			const r = game.respond(spec, state, game.MOD_COLOR, action, offset);
+			state = r.state;
+			if (r.event.result === "accepted") accepted.push(r.event);
+			offset += 100;
+		}
+		// folding the accepted events through the replay form equals the live fold
+		expect(game.finalEngagedFrom(accepted, game.MOD_COLOR)).toBe(
+			game.isEngaged(state, game.MOD_COLOR),
+		);
+		expect(game.isEngaged(state, game.MOD_COLOR)).toBe(true);
+	});
+});
+
 describe("newSessionRecord", () => {
 	test("stamps the current SESSION_RECORD_VERSION and threads fields", () => {
 		const s = game.validateAndResolveConfig(simpleConfig());

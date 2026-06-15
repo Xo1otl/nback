@@ -3,12 +3,20 @@
  *
  * Events are a flat, append-only log with no trial index; trial boundaries are
  * recovered by counting `trialAdvanced` events (the session starts in trial 0,
- * and each `trialAdvanced` moves to the next trial). For each scored trial and
- * enabled modality the judgment is determined by:
+ * and each `trialAdvanced` moves to the next trial). A trial is *scored* only if
+ * it is past the memorization phase AND actually reached feedback (a
+ * `trialClosed` was logged for it) — so an aborted or otherwise incomplete
+ * session scores only the trials the player truly completed, never the
+ * pre-generated trials they never saw.
  *
- *   - match:        stimulus[m][t] == stimulus[m][t - N]   (stable-ID equality)
+ * For each scored trial and enabled modality the judgment is determined by:
+ *
+ *   - match:        stimulus[m][t] == stimulus[m][t - N]   (game.matchAt)
  *   - final state:  the last accepted `respond` action for the mod in trial t,
- *                   defaulting to disengage.
+ *                   defaulting to disengage                (game.finalEngagedFrom)
+ *
+ * Both the match rule and the response fold live in `game` and are shared with
+ * the driver's live feedback, so the live and post-hoc judgments cannot drift.
  */
 
 import * as game from "@/game";
@@ -17,21 +25,22 @@ import {
 	type ModCounts,
 	type ModJudgment,
 	type ModScore,
-	type Outcome,
-	OUTCOME_CORRECT_REJECT,
-	OUTCOME_FALSE_ALARM,
-	OUTCOME_HIT,
-	OUTCOME_MISS,
 	type SessionScore,
 	type StandardNormalQuantile,
 	type TrialFeedback,
 } from "./_types";
 
-/** Group accepted-or-not `responded` events by the trial they occurred in. */
-function respondedByTrial(
-	events: readonly game.Event[],
-): Map<game.TrialIndex, game.Responded[]> {
+type Segmented = {
+	/** `responded` events (accepted or not) grouped by the trial they occurred in. */
+	readonly byTrial: Map<game.TrialIndex, game.Responded[]>;
+	/** Trials that reached feedback — i.e. a `trialClosed` was logged for them. */
+	readonly closedTrials: Set<game.TrialIndex>;
+};
+
+/** Walk the event log once, recovering per-trial buckets and the closed trials. */
+function segmentEvents(events: readonly game.Event[]): Segmented {
 	const byTrial = new Map<game.TrialIndex, game.Responded[]>();
+	const closedTrials = new Set<game.TrialIndex>();
 	let trial = 0;
 	for (const ev of events) {
 		if (ev.type === "responded") {
@@ -41,61 +50,34 @@ function respondedByTrial(
 			} else {
 				byTrial.set(trial, [ev]);
 			}
+		} else if (ev.type === "trialClosed") {
+			// responding(t) -> feedback(t): trial t completed (does NOT advance t).
+			closedTrials.add(trial);
 		} else if (ev.type === "trialAdvanced") {
 			trial++;
 		}
-		// trialClosed does not change the trial index (responding -> feedback).
 	}
-	return byTrial;
-}
-
-/** Last accepted action for `mod`, defaulting to disengaged (§Scoring). */
-function finalEngaged(
-	responded: readonly game.Responded[],
-	mod: game.ModID,
-): boolean {
-	let engaged = false;
-	for (const r of responded) {
-		if (r.mod === mod && r.result === "accepted") {
-			engaged = r.action === "engage";
-		}
-	}
-	return engaged;
-}
-
-function outcomeOf(matched: boolean, engaged: boolean): Outcome {
-	if (matched) {
-		return engaged ? OUTCOME_HIT : OUTCOME_MISS;
-	}
-	return engaged ? OUTCOME_FALSE_ALARM : OUTCOME_CORRECT_REJECT;
+	return { byTrial, closedTrials };
 }
 
 function judgeTrial(
 	record: game.SessionRecord,
-	byTrial: Map<game.TrialIndex, game.Responded[]>,
+	seg: Segmented,
 	t: game.TrialIndex,
 ): TrialFeedback | undefined {
 	const spec = record.spec;
-	if (!game.isScoredTrial(spec, t)) {
+	// Score only trials past memorization that actually reached feedback. An
+	// unreached trial (aborted/incomplete session) must NOT be fabricated as an
+	// all-disengaged Miss/CorrectReject.
+	if (!game.isScoredTrial(spec, t) || !seg.closedTrials.has(t)) {
 		return undefined;
 	}
 
-	const cur = record.stimuli.find((s) => s.trial === t);
-	const prev = record.stimuli.find((s) => s.trial === t - spec.n);
-	if (!cur || !prev) {
-		return undefined;
-	}
-
-	const responded = byTrial.get(t) ?? [];
+	const responded = seg.byTrial.get(t) ?? [];
 	const judgments: ModJudgment[] = spec.mods.map((mc) => {
-		const curValue = game.trialStimulusValue(cur, mc.mod);
-		const prevValue = game.trialStimulusValue(prev, mc.mod);
-		const matched =
-			curValue !== undefined &&
-			prevValue !== undefined &&
-			curValue === prevValue;
-		const engaged = finalEngaged(responded, mc.mod);
-		return { mod: mc.mod, outcome: outcomeOf(matched, engaged) };
+		const matched = game.matchAt(record.stimuli, spec.n, t, mc.mod) ?? false;
+		const engaged = game.finalEngagedFrom(responded, mc.mod);
+		return { mod: mc.mod, outcome: game.outcomeOf(matched, engaged) };
 	});
 
 	return { trial: t, judgments };
@@ -106,18 +88,18 @@ export function projectTrialFeedback(
 	record: game.SessionRecord,
 	t: game.TrialIndex,
 ): TrialFeedback | undefined {
-	return judgeTrial(record, respondedByTrial(record.events), t);
+	return judgeTrial(record, segmentEvents(record.events), t);
 }
 
 /** {@link projectTrialFeedback} across every scored trial, in trial order. */
 export function reconstructTrials(
 	record: game.SessionRecord,
 ): TrialFeedback[] {
-	const byTrial = respondedByTrial(record.events);
+	const seg = segmentEvents(record.events);
 	const total = game.totalTrials(record.spec);
 	const out: TrialFeedback[] = [];
 	for (let t = 0; t < total; t++) {
-		const feedback = judgeTrial(record, byTrial, t);
+		const feedback = judgeTrial(record, seg, t);
 		if (feedback) {
 			out.push(feedback);
 		}
@@ -126,8 +108,10 @@ export function reconstructTrials(
 }
 
 /**
- * Aggregate judgments into per-modality counts + SDT, in spec order
- * (§Scoring). `q` defaults to {@link standardNormalQuantile}.
+ * Aggregate judgments into per-modality counts + SDT, in spec order (§Scoring).
+ * `q` defaults to {@link standardNormalQuantile}. For an incomplete session only
+ * completed trials are counted, so H + M + F + C <= problemCount — and equals it
+ * exactly once the session has run to completion.
  */
 export function projectSessionScore(
 	record: game.SessionRecord,
@@ -146,16 +130,16 @@ export function projectSessionScore(
 			const tally = tallies.get(j.mod);
 			if (!tally) continue;
 			switch (j.outcome) {
-				case OUTCOME_HIT:
+				case game.OUTCOME_HIT:
 					tally.h++;
 					break;
-				case OUTCOME_MISS:
+				case game.OUTCOME_MISS:
 					tally.m++;
 					break;
-				case OUTCOME_FALSE_ALARM:
+				case game.OUTCOME_FALSE_ALARM:
 					tally.f++;
 					break;
-				case OUTCOME_CORRECT_REJECT:
+				case game.OUTCOME_CORRECT_REJECT:
 					tally.c++;
 					break;
 			}

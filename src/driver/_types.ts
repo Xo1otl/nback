@@ -27,6 +27,8 @@ export type ModFeedback = {
 	readonly engaged: boolean;
 	/** Whether the response was correct (match === engaged). */
 	readonly correct: boolean;
+	/** The SDT confusion-matrix cell (Hit/Miss/FalseAlarm/CorrectReject). */
+	readonly outcome: game.Outcome;
 };
 
 /**

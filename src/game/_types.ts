@@ -187,9 +187,12 @@ export function newSessionRecord(
 		id,
 		spec,
 		seed,
-		stimuli,
+		// Copy the arrays so the record is a true immutable snapshot, decoupled
+		// from any live mutable producer (e.g. the driver's growing event log,
+		// which it keeps pushing to after `record()` hands out a SessionRecord).
+		stimuli: [...stimuli],
 		origin,
-		events,
+		events: [...events],
 	};
 }
 
@@ -243,6 +246,94 @@ export function responseFor(state: SessionState, id: ModID): ResponseAction {
 /** Whether a modality is currently engaged in the current trial. */
 export function isEngaged(state: SessionState, id: ModID): boolean {
 	return responseFor(state, id) === ACTION_ENGAGE;
+}
+
+// ---- Scoring vocabulary (§Scoring) ----
+//
+// The single home for the three rules that define a scored trial: the match
+// rule, the response fold, and the match×engaged confusion-matrix cell. Both
+// the live `driver` feedback and the post-hoc `analysis` projection consume
+// these, so the two views can never drift.
+
+/** The SDT confusion-matrix cells. */
+export type Outcome = "H" | "M" | "F" | "C";
+/** Hit: match + engaged. */
+export const OUTCOME_HIT: Outcome = "H";
+/** Miss: match + disengaged. */
+export const OUTCOME_MISS: Outcome = "M";
+/** False alarm: no match + engaged. */
+export const OUTCOME_FALSE_ALARM: Outcome = "F";
+/** Correct reject: no match + disengaged. */
+export const OUTCOME_CORRECT_REJECT: Outcome = "C";
+
+/** Classify a scored trial from whether it matched and whether it was engaged. */
+export function outcomeOf(matched: boolean, engaged: boolean): Outcome {
+	if (matched) {
+		return engaged ? OUTCOME_HIT : OUTCOME_MISS;
+	}
+	return engaged ? OUTCOME_FALSE_ALARM : OUTCOME_CORRECT_REJECT;
+}
+
+/** Whether the trial was a match (Hit or Miss). */
+export function outcomeIsMatch(o: Outcome): boolean {
+	return o === OUTCOME_HIT || o === OUTCOME_MISS;
+}
+
+/** Whether the final response state was engaged (Hit or FalseAlarm). */
+export function outcomeIsEngaged(o: Outcome): boolean {
+	return o === OUTCOME_HIT || o === OUTCOME_FALSE_ALARM;
+}
+
+/** Whether the response was correct (Hit or CorrectReject). */
+export function outcomeIsCorrect(o: Outcome): boolean {
+	return o === OUTCOME_HIT || o === OUTCOME_CORRECT_REJECT;
+}
+
+/**
+ * The match rule (§Match): whether modality `mod` at trial `t` repeats its value
+ * from the n-back lookback `t - n` (stable-ID equality). `undefined` when `t` is
+ * a memorization trial (`t < n`) or either trial/value is absent — the trace is
+ * dense by trial, so for a well-formed record this resolves for every scored t.
+ */
+export function matchAt(
+	stimuli: StimulusTrace,
+	n: number,
+	t: TrialIndex,
+	mod: ModID,
+): boolean | undefined {
+	if (t < n) {
+		return undefined;
+	}
+	const cur = stimuli[t];
+	const prev = stimuli[t - n];
+	if (cur === undefined || prev === undefined) {
+		return undefined;
+	}
+	const curValue = trialStimulusValue(cur, mod);
+	const prevValue = trialStimulusValue(prev, mod);
+	if (curValue === undefined || prevValue === undefined) {
+		return undefined;
+	}
+	return curValue === prevValue;
+}
+
+/**
+ * Replay a trial's `responded` events into the final engaged state for `mod`
+ * (last accepted action wins; default disengaged). This is the log-replay
+ * equivalent of the live incremental fold read via {@link responseFor} /
+ * {@link isEngaged}; both implement the same §Scoring rule over the SSOT.
+ */
+export function finalEngagedFrom(
+	responded: readonly Responded[],
+	mod: ModID,
+): boolean {
+	let engaged = false;
+	for (const r of responded) {
+		if (r.mod === mod && r.result === RESULT_ACCEPTED) {
+			engaged = r.action === ACTION_ENGAGE;
+		}
+	}
+	return engaged;
 }
 
 // ---- Known modalities and their canonical option universes (§Modalities) ----

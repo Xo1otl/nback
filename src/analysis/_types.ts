@@ -8,38 +8,16 @@
 
 import type * as game from "@/game";
 
-// ---- Outcomes (§Scoring) — the SDT confusion-matrix cells ----
-
-export type Outcome = "H" | "M" | "F" | "C";
-/** Hit: match + final state engaged. */
-export const OUTCOME_HIT: Outcome = "H";
-/** Miss: match + final state disengaged. */
-export const OUTCOME_MISS: Outcome = "M";
-/** False alarm: no match + final state engaged. */
-export const OUTCOME_FALSE_ALARM: Outcome = "F";
-/** Correct reject: no match + final state disengaged. */
-export const OUTCOME_CORRECT_REJECT: Outcome = "C";
-
-/** Whether the trial was a match (Hit or Miss). */
-export function outcomeIsMatch(o: Outcome): boolean {
-	return o === OUTCOME_HIT || o === OUTCOME_MISS;
-}
-
-/** Whether the final response state was engaged (Hit or FalseAlarm). */
-export function outcomeIsEngaged(o: Outcome): boolean {
-	return o === OUTCOME_HIT || o === OUTCOME_FALSE_ALARM;
-}
-
-/** Whether the response was correct (Hit or CorrectReject). */
-export function outcomeIsCorrect(o: Outcome): boolean {
-	return o === OUTCOME_HIT || o === OUTCOME_CORRECT_REJECT;
-}
-
 // ---- Per-trial projection ----
+//
+// The `Outcome` vocabulary (cells + `outcomeOf` + the predicates) lives in
+// `game` now — it is the shared judgment used by both the live `driver`
+// feedback and this projection — and is re-exported from this package's
+// `index.ts` for convenience.
 
 export type ModJudgment = {
 	readonly mod: game.ModID;
-	readonly outcome: Outcome;
+	readonly outcome: game.Outcome;
 };
 
 export type TrialFeedback = {

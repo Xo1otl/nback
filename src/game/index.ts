@@ -66,6 +66,18 @@ export {
 	sameStimulus,
 	responseFor,
 	isEngaged,
+	matchAt,
+	finalEngagedFrom,
+	// scoring vocabulary (shared by driver feedback + analysis projection)
+	type Outcome,
+	OUTCOME_HIT,
+	OUTCOME_MISS,
+	OUTCOME_FALSE_ALARM,
+	OUTCOME_CORRECT_REJECT,
+	outcomeOf,
+	outcomeIsMatch,
+	outcomeIsEngaged,
+	outcomeIsCorrect,
 	// known modalities + canonical universes
 	MOD_POSITION,
 	MOD_COLOR,

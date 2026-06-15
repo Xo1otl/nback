@@ -287,3 +287,55 @@ describe("projectSessionScore & reconstructTrials", () => {
 		});
 	});
 });
+
+// ---- Projection: incomplete / aborted sessions -------------------------
+
+describe("incomplete / aborted sessions", () => {
+	// n = 1, T = 6: trial 0 memo, trials 1..5 scored. Stimuli are pre-generated
+	// for ALL trials even if the player never reaches them.
+	const s = spec(1, 5);
+	const stimuli: game.StimulusTrace = [
+		colorTrial(0, "red"),
+		colorTrial(1, "red"), // matches t-1 (red)
+		colorTrial(2, "green"),
+		colorTrial(3, "green"),
+		colorTrial(4, "red"),
+		colorTrial(5, "red"),
+	];
+
+	test("scores only trials that actually reached feedback (aborted mid-session)", () => {
+		// Closed trials 0 and 1 (engaged on the trial-1 match), then aborted before
+		// trial 2 ever closed. Trials 2..5 were never completed.
+		const r = record(s, stimuli, [
+			CLOSED,
+			ADVANCED,
+			accepted("engage"),
+			CLOSED,
+			ADVANCED,
+		]);
+		// only the scored trial that closed (trial 1) is reconstructed
+		expect(analysis.reconstructTrials(r).map((t) => t.trial)).toEqual([1]);
+		const color = analysis.sessionScoreMod(
+			analysis.projectSessionScore(r),
+			game.MOD_COLOR,
+		)!;
+		expect(color.counts).toEqual({ mod: game.MOD_COLOR, h: 1, m: 0, f: 0, c: 0 });
+		// honest total: <= problemCount, NOT fabricated up to 5 from unseen trials
+		expect(analysis.countsTotal(color.counts)).toBe(1);
+	});
+
+	test("a session aborted during the memorization feedback scores nothing", () => {
+		const r = record(s, stimuli, [CLOSED]); // closed trial 0 (memo) only
+		expect(analysis.reconstructTrials(r)).toEqual([]);
+		const color = analysis.sessionScoreMod(
+			analysis.projectSessionScore(r),
+			game.MOD_COLOR,
+		)!;
+		expect(analysis.countsTotal(color.counts)).toBe(0);
+	});
+
+	test("projectTrialFeedback returns undefined for a scored trial never reached", () => {
+		const r = record(s, stimuli, [CLOSED]); // never advanced past trial 0
+		expect(analysis.projectTrialFeedback(r, 3)).toBeUndefined();
+	});
+});

@@ -96,18 +96,17 @@ export function createDriver(
 	}
 
 	function buildFeedback(): ModFeedback[] {
-		const cur = stimuli.find((s) => s.trial === state.trial);
-		const prev = stimuli.find((s) => s.trial === state.trial - spec.n);
-		if (!cur || !prev) return [];
 		return spec.mods.map((mc) => {
-			const curValue = game.trialStimulusValue(cur, mc.mod);
-			const prevValue = game.trialStimulusValue(prev, mc.mod);
-			const match =
-				curValue !== undefined &&
-				prevValue !== undefined &&
-				curValue === prevValue;
+			const match = game.matchAt(stimuli, spec.n, state.trial, mc.mod) ?? false;
 			const engaged = game.isEngaged(state, mc.mod);
-			return { mod: mc.mod, match, engaged, correct: match === engaged };
+			const outcome = game.outcomeOf(match, engaged);
+			return {
+				mod: mc.mod,
+				match,
+				engaged,
+				correct: game.outcomeIsCorrect(outcome),
+				outcome,
+			};
 		});
 	}
 

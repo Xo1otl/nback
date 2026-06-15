@@ -5,7 +5,7 @@
  * Import as a namespace: `import * as analysis from "@/analysis"`.
  */
 
-// ---- Data model: outcomes, judgments, counts, scores ----
+// ---- Outcome vocabulary (defined in `game`; re-exported here for convenience) ----
 export {
 	type Outcome,
 	OUTCOME_HIT,
@@ -15,6 +15,10 @@ export {
 	outcomeIsMatch,
 	outcomeIsEngaged,
 	outcomeIsCorrect,
+} from "@/game";
+
+// ---- Data model: judgments, counts, scores ----
+export {
 	type ModJudgment,
 	type TrialFeedback,
 	type ModCounts,

@@ -163,6 +163,10 @@ describe("driver inputs & feedback", () => {
 		const color = fb.find((f) => f.mod === game.MOD_COLOR)!;
 		expect(color.match).toBe(curColor === prevColor);
 		expect(color.engaged).toBe(curColor === prevColor);
+		// the richer outcome cell agrees with match/engaged
+		expect(color.outcome).toBe(
+			curColor === prevColor ? game.OUTCOME_HIT : game.OUTCOME_CORRECT_REJECT,
+		);
 	});
 
 	test("ignores inputs before start and after done", () => {
@@ -237,5 +241,24 @@ describe("driver determinism & abort", () => {
 		unsub();
 		fc.advance(500); // no more notifications
 		expect(count).toBe(at);
+	});
+
+	test("record() returns an immutable snapshot, decoupled from the live log", () => {
+		const fc = fakeClock();
+		const d = driver.createDriver(
+			config({ n: 1, problemCount: 5 }),
+			{ id: "s", seed: "k", deps: { clock: fc.clock } },
+		);
+		d.start();
+		fc.advance(1000); // feedback(0): a trialClosed is appended to the live log
+		const captured = d.record()!;
+		const lenAtCapture = captured.events.length;
+		expect(lenAtCapture).toBeGreaterThan(0);
+		fc.advance(500); // session keeps advancing, pushing more events to the live log
+		fc.advance(1000);
+		// the previously-captured record must NOT have grown (no aliasing)
+		expect(captured.events.length).toBe(lenAtCapture);
+		// a freshly-taken record reflects the newer events
+		expect(d.record()!.events.length).toBeGreaterThan(lenAtCapture);
 	});
 });
