@@ -1,2 +1,7 @@
 [serve.static]
 env = "BUN_PUBLIC_*"
+# Tailwind v4 is compiled by Bun's native bundler plugin. This entry powers the
+# dev server (`bun src/index.html`); the production build wires the same plugin
+# in via Bun.build() in scripts/build.ts (the `bun build` CLI does not yet read
+# plugins from bunfig).
+plugins = ["bun-plugin-tailwind"]

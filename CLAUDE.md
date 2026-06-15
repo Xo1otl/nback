@@ -104,3 +104,29 @@ bun --hot ./index.ts
 ```
 
 For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
+
+## Styling: Tailwind v4 + shadcn/ui
+
+Tailwind v4 is compiled by Bun's native `bun-plugin-tailwind` (no `tailwind.config.js`,
+no PostCSS). Theme tokens, dark mode, and `@theme inline` live in `src/index.css`.
+
+- **Dev server** (`bun dev`) loads the plugin via `bunfig.toml` → `[serve.static] plugins`.
+- **Production** (`bun run build`) goes through `scripts/build.ts`, which calls
+  `Bun.build()` with the plugin. This is deliberate: the `bun build` **CLI cannot load
+  bundler plugins yet**, so the build was moved off the CLI to the JS API. If you change
+  build flags, edit `scripts/build.ts` (not a CLI invocation).
+- Dark mode is opt-in via `class="dark"` on `<html>` (set in `src/index.html`).
+
+### shadcn/ui
+
+Configured via `components.json` (style `new-york`, base color `neutral`, `@/*` → `src/*`).
+Add components with:
+
+```sh
+bunx shadcn@latest add <component>   # e.g. dialog, input, card
+```
+
+Components land in `src/components/ui/`; the `cn()` helper is at `src/lib/utils.ts`.
+Note: vendored shadcn components in `components/ui/` follow shadcn's own file layout
+(flat `*.tsx`), not this repo's package-oriented `_internal.ts` + `index.ts` convention —
+that convention still applies to first-party packages (`game`, `driver`, `analysis`, …).
