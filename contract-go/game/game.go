@@ -1,20 +1,21 @@
 package game
 
 type (
-	SessionID    string
-	TrialIndex   int
-	EventSeq     int64
-	Milliseconds int64
-	VSyncStamp   int64
-	Probability  float64
-	RandomSeed   string
-	StimulusID   string
-	ModID        string
+	SessionID      string
+	TrialIndex     int
+	EventSeq       int64
+	Milliseconds   int64
+	VSyncStamp     int64
+	Probability    float64
+	Option         string
+	RandomSeed     string
+	ModID          string
+	ResponseAction string
+	EventKind      string
+	EventResult    string
+	ReasonCode     string
+	Phase          string
 )
-
-type Option struct {
-	ID StimulusID
-}
 
 type OptionList []Option
 
@@ -82,23 +83,13 @@ func (t TrialStimulus) Value(id ModID) (Option, bool) {
 			return v.Value, true
 		}
 	}
-	return Option{}, false
+	return "", false
 }
-
-type Phase string
 
 type SessionState struct {
 	Phase Phase
 	Trial TrialIndex
 }
-
-type ResponseAction string
-
-type EventKind string
-
-type EventResult string
-
-type ReasonCode string
 
 type DomainEventRecord struct {
 	Seq    EventSeq
@@ -106,7 +97,6 @@ type DomainEventRecord struct {
 	Result EventResult
 	Reason ReasonCode
 	Trial  TrialIndex
-
 	Mod    ModID
 	Action ResponseAction
 	Offset Milliseconds
@@ -118,10 +108,8 @@ type SessionRecord struct {
 	Spec    SessionSpec
 	Seed    RandomSeed
 	Stimuli StimulusTrace
-
-	Origin VSyncStamp
-
-	Events []DomainEventRecord
+	Origin  VSyncStamp
+	Events  []DomainEventRecord
 }
 
 type Session struct {
@@ -158,19 +146,19 @@ func RestoreSession(record SessionRecord) (*Session, error) {
 	return nil, nil
 }
 
-func (s *Session) Respond(m ModID, action ResponseAction, offset Milliseconds) (DomainEventRecord, error) {
+func (s *Session) Respond(m ModID, action ResponseAction, offset Milliseconds) DomainEventRecord {
 	// TODO: append a respond event; set Result/Reason.
-	return DomainEventRecord{}, nil
+	return DomainEventRecord{}
 }
 
-func (s *Session) CloseTrial(offset Milliseconds) (DomainEventRecord, error) {
+func (s *Session) CloseTrial(offset Milliseconds) DomainEventRecord {
 	// TODO: transition responding -> feedback.
-	return DomainEventRecord{}, nil
+	return DomainEventRecord{}
 }
 
-func (s *Session) NextTrial(offset Milliseconds) (DomainEventRecord, error) {
+func (s *Session) NextTrial(offset Milliseconds) DomainEventRecord {
 	// TODO: advance trial / transition feedback -> responding or done.
-	return DomainEventRecord{}, nil
+	return DomainEventRecord{}
 }
 
 func ValidateAndResolveConfig(cfg SessionConfig) (SessionSpec, error) {
@@ -179,7 +167,7 @@ func ValidateAndResolveConfig(cfg SessionConfig) (SessionSpec, error) {
 }
 
 func SameStimulus(a, b ModStimulus) bool {
-	return a.Mod == b.Mod && a.Value.ID == b.Value.ID
+	return a.Mod == b.Mod && a.Value == b.Value
 }
 
 const SessionRecordVersion = 3
@@ -194,21 +182,21 @@ const (
 )
 
 const (
-	ColorRed    StimulusID = "red"
-	ColorGreen  StimulusID = "green"
-	ColorPurple StimulusID = "purple"
-	ColorBlack  StimulusID = "black"
+	ColorRed    Option = "red"
+	ColorGreen  Option = "green"
+	ColorPurple Option = "purple"
+	ColorBlack  Option = "black"
 
-	ShapeTriangle StimulusID = "triangle"
-	ShapeSquare   StimulusID = "square"
-	ShapePentagon StimulusID = "pentagon"
-	ShapeEllipse  StimulusID = "ellipse"
+	ShapeTriangle Option = "triangle"
+	ShapeSquare   Option = "square"
+	ShapePentagon Option = "pentagon"
+	ShapeEllipse  Option = "ellipse"
 
-	AnimationBlur     StimulusID = "blur"
-	AnimationFlying   StimulusID = "flying"
-	AnimationScaling  StimulusID = "scaling"
-	AnimationRotation StimulusID = "rotation"
-	AnimationNone     StimulusID = "none"
+	AnimationBlur     Option = "blur"
+	AnimationFlying   Option = "flying"
+	AnimationScaling  Option = "scaling"
+	AnimationRotation Option = "rotation"
+	AnimationNone     Option = "none"
 )
 
 const (
@@ -236,38 +224,37 @@ const (
 )
 
 const (
-	ReasonNone              ReasonCode = ""
-	ReasonNotResponding     ReasonCode = "notResponding"
-	ReasonMemoTrial         ReasonCode = "memoTrial"
-	ReasonModNotEnabled     ReasonCode = "modNotEnabled"
-	ReasonOutsideWindow     ReasonCode = "outsideWindow"
-	ReasonInvalidTransition ReasonCode = "invalidTransition"
+	ReasonNone          ReasonCode = ""
+	ReasonNotResponding ReasonCode = "notResponding"
+	ReasonMemoTrial     ReasonCode = "memoTrial"
+	ReasonModNotEnabled ReasonCode = "modNotEnabled"
+	ReasonOutsideWindow ReasonCode = "outsideWindow"
 )
 
 var (
 	CanonicalColor = OptionList{
-		{ID: ColorRed}, {ID: ColorGreen}, {ID: ColorPurple}, {ID: ColorBlack},
+		ColorRed, ColorGreen, ColorPurple, ColorBlack,
 	}
 
 	CanonicalCharacter = OptionList{
-		{ID: "0"}, {ID: "1"}, {ID: "2"}, {ID: "3"}, {ID: "4"},
-		{ID: "5"}, {ID: "6"}, {ID: "7"}, {ID: "8"}, {ID: "9"},
-		{ID: "A"}, {ID: "B"}, {ID: "C"}, {ID: "D"}, {ID: "E"},
-		{ID: "H"}, {ID: "K"}, {ID: "L"}, {ID: "M"}, {ID: "O"},
+		"0", "1", "2", "3", "4",
+		"5", "6", "7", "8", "9",
+		"A", "B", "C", "D", "E",
+		"H", "K", "L", "M", "O",
 	}
 
 	CanonicalShape = OptionList{
-		{ID: ShapeTriangle}, {ID: ShapeSquare}, {ID: ShapePentagon}, {ID: ShapeEllipse},
+		ShapeTriangle, ShapeSquare, ShapePentagon, ShapeEllipse,
 	}
 
 	CanonicalAudio = OptionList{
-		{ID: "A"}, {ID: "B"}, {ID: "C"}, {ID: "H"},
-		{ID: "K"}, {ID: "L"}, {ID: "M"}, {ID: "O"},
+		"A", "B", "C", "H",
+		"K", "L", "M", "O",
 	}
 
 	CanonicalAnimation = OptionList{
-		{ID: AnimationBlur}, {ID: AnimationFlying}, {ID: AnimationScaling},
-		{ID: AnimationRotation}, {ID: AnimationNone},
+		AnimationBlur, AnimationFlying, AnimationScaling,
+		AnimationRotation, AnimationNone,
 	}
 )
 
@@ -279,9 +266,9 @@ func DefaultMultiplexConfig(n, problemCount int, match Probability, timing Timin
 		Timing:           timing,
 		Mods: []ModConfig{
 			{Mod: ModPosition, Options: OptionList{
-				{ID: "r0c0"}, {ID: "r0c1"}, {ID: "r0c2"},
-				{ID: "r1c0"}, {ID: "r1c1"}, {ID: "r1c2"},
-				{ID: "r2c0"}, {ID: "r2c1"}, {ID: "r2c2"},
+				"r0c0", "r0c1", "r0c2",
+				"r1c0", "r1c1", "r1c2",
+				"r2c0", "r2c1", "r2c2",
 			}},
 			{Mod: ModColor, Options: CanonicalColor},
 			{Mod: ModCharacter, Options: CanonicalCharacter},
