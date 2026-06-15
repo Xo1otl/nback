@@ -19,11 +19,13 @@ export function ReadyOverlay({
 	n,
 	audioEnabled,
 	onStart,
+	onCancel,
 }: {
 	mods: readonly game.ModID[];
 	n: number;
 	audioEnabled: boolean;
 	onStart: () => void;
+	onCancel: () => void;
 }) {
 	return (
 		<div className="absolute inset-0 z-10 flex items-center justify-center p-4">
@@ -55,11 +57,21 @@ export function ReadyOverlay({
 							);
 						})}
 					</div>
-					<Button size="lg" onClick={onStart}>
-						<Play /> Start
-					</Button>
+					<div className="flex gap-2">
+						<Button
+							variant="outline"
+							size="lg"
+							className="flex-1"
+							onClick={onCancel}
+						>
+							Cancel
+						</Button>
+						<Button size="lg" className="flex-1" onClick={onStart}>
+							<Play /> Start
+						</Button>
+					</div>
 					<p className="text-xs text-muted-foreground">
-						Space or Enter to begin
+						Space or Enter to begin · Esc to cancel
 						{audioEnabled ? " · sound on, listen for the letter" : ""}
 					</p>
 				</CardContent>

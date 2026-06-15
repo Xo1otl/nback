@@ -134,6 +134,7 @@ function GameView({
 		onStart: start,
 		onSeeResults: seeResults,
 		onQuit: () => setConfirmQuit(true),
+		onCancel: onHome,
 	});
 
 	// Persist exactly once when the session reaches a terminal state. (The
@@ -229,6 +230,7 @@ function GameView({
 						n={n}
 						audioEnabled={audioEnabled}
 						onStart={start}
+						onCancel={onHome}
 					/>
 				)}
 

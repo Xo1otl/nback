@@ -25,6 +25,8 @@ export type GameKeyboard = {
 	onStart: () => void;
 	onSeeResults: () => void;
 	onQuit: () => void;
+	/** Back out of the pre-start (idle) overlay without starting. */
+	onCancel: () => void;
 };
 
 export function useGameKeyboard(handlers: GameKeyboard): void {
@@ -66,6 +68,9 @@ export function useGameKeyboard(handlers: GameKeyboard): void {
 				if (s.status === "running") {
 					e.preventDefault();
 					h.onQuit();
+				} else if (s.status === "idle") {
+					e.preventDefault();
+					h.onCancel();
 				}
 				return;
 			}

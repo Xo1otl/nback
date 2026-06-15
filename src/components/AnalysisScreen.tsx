@@ -41,6 +41,10 @@ export function AnalysisScreen({
 	const dp = meanDPrime(score);
 	const band = sensitivityBand(dp);
 	const acc = overallAccuracy(score);
+	// A flawless run (100% accuracy) still caps below "Elite" on a short session:
+	// the log-linear d′ ceiling rises with the number of *scored trials* (not N or
+	// match rate). Rather than fake the top band, nudge toward a longer session.
+	const cappedFlawless = acc === 1 && band?.label !== "Elite";
 
 	return (
 		<Shell>
@@ -68,6 +72,11 @@ export function AnalysisScreen({
 							{band && (
 								<p className={cn("text-sm font-medium", band.tone)}>
 									{band.label}
+								</p>
+							)}
+							{cappedFlawless && (
+								<p className="text-xs text-muted-foreground">
+									Flawless — add scored trials to reach Elite
 								</p>
 							)}
 						</CardHeader>
