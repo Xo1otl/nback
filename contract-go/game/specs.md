@@ -11,17 +11,30 @@ Total trials $T = N + \text{problemCount}$. Index 0.
 
 ## States
 
-* **`responding(t)`:** Show stimulus. Scored: allow response logging per mod. Memo: ignore input. Trial start = v-sync timestamp.
+* **`responding(t)`:** Show stimulus. Scored: allow response logging per mod. Memo: ignore input.
 * **`feedback(t)`:** Scored: show judgments. Memo: no judgment. Ignore input.
 * **`done`:** Terminal. Ignore input.
 
+## Timing
+
+**Origin** = v-sync @ `responding(0)` onset; sole absolute ref. Every event: **offset** = ms from Origin.
+
+`respondingOnset.offset` = 0 if `t=0`, else entering `nextTrial.offset`.
+
+Derived:
+
+* RT = `respond.offset - respondingOnset.offset`
+* responding dur = `closeTrial.offset - respondingOnset.offset`
+* feedback dur = `nextTrial.offset - closeTrial.offset`
+* abs v-sync = `Origin + offset`
+
 ## Events (Driver)
 
-No internal timers. Pure deterministic state machine.
+Pure deterministic state machine.
 
-* **`respond(m, action, deltaTime)`:** Log: `[(action, deltaTime), ...]`. action: engage|disengage. deltaTime: ms from v-sync. Validate: responding, scored, mod enabled, deltaTime <= respondingDuration. Score via last valid event.
-* **`closeTrial`:** `responding(t)` $\rightarrow$ `feedback(t)`.
-* **`nextTrial`:** `feedback(t)` $\rightarrow$ `responding(t+1)` or `done`.
+* **`respond(m, action, offset)`:** Log: `[(action, offset), ...]`. action: engage|disengage. Validate: responding, scored, mod enabled, `offset - respondingOnset.offset <= respondingDuration`.
+* **`closeTrial(offset)`:** `responding(t)` $\rightarrow$ `feedback(t)`.
+* **`nextTrial(offset)`:** `feedback(t)` $\rightarrow$ `responding(t+1)` or `done`.
 
 ## Modalities
 
@@ -45,7 +58,7 @@ Independent per mod/trial.
 ## Configuration & Validation
 
 * **Core:** N (>=1), problemCount (>=1), p in (0, 1)
-* **Timing:** respondingDuration, feedbackDuration (affects driver only, not logic)
+* **Timing:** respondingDuration, feedbackDuration (mostly driver only, not logic)
 * **Mods (>=1 enabled, k>=2 subset per mod, defaults=canonical):**
 * Position: enable | subset {coordinate IDs}
 * Color: enable | subset {red, green, purple, black}
@@ -53,20 +66,3 @@ Independent per mod/trial.
 * Shape: enable | subset {triangle, square, pentagon, ellipse}
 * Audio: enable | subset {A-C, H, K-M, O}
 * Animation: enable | subset {blur, flying, scaling, rotation, none}
-
-## Scoring (Per Mod)
-
-* **Hit (H):** match + final state engaged
-* **Miss (M):** match + final state disengaged
-* **FalseAlarm (F):** no_match + final state engaged
-* **CorrectReject (C):** no_match + final state disengaged
-* $\text{problemCount} = H + M + F + C$
-
-Using Signal Detection Theory (SDT) with log-linear correction:
-
-$$HR = \frac{H + 0.5}{H + M + 1}$$
-$$FAR = \frac{F + 0.5}{F + C + 1}$$
-$$d' = Z(HR) - Z(FAR)$$
-$$c = -\frac{Z(HR) + Z(FAR)}{2}$$
-
-Z(x) is the inverse CDF of the standard normal distribution.
