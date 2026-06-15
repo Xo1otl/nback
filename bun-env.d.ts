@@ -8,6 +8,14 @@ declare module "*.svg" {
   export = path;
 }
 
+declare module "*.mp3" {
+  /**
+   * A path/URL to the bundled MP3 file (Bun's default `file` loader).
+   */
+  const path: `${string}.mp3`;
+  export = path;
+}
+
 declare module "*.css" {}
 
 declare module "*.module.css" {

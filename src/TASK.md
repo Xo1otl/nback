@@ -17,7 +17,8 @@
 3. **game** — `components/game/*`. Drives `driver` bound through `useSyncExternalStore`
    (`hooks/useSession.ts`). Pure projection of the snapshot: HUD + composite SVG Stage
    (position grid · shape · color · auto-contrast glyph · animation; audio via
-   `speechSynthesis`, `hooks/useStimulusAudio.ts`) + per-mod ResponseRail. Sub-states
+   pre-rendered clips, `lib/stimulusAudio.ts` + `hooks/useStimulusAudio.ts`) + per-mod
+   ResponseRail. Sub-states
    ready → responding → feedback → done/aborted. Keyboard (one window listener), aria-live
    announcer, focus-trapped quit confirm, reduced-motion-aware (scored animation channel
    survives the global kill via `.stim-rm-keep`).

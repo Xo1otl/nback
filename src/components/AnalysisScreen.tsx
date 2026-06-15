@@ -14,7 +14,13 @@ import {
 } from "@/components/ui/card";
 import { Shell } from "@/components/Shell";
 import { modMeta } from "@/lib/modalities";
-import { fmtDPrime, meanDPrime, overallAccuracy } from "@/lib/score";
+import {
+	fmtDPrime,
+	meanDPrime,
+	overallAccuracy,
+	sensitivityBand,
+} from "@/lib/score";
+import { cn } from "@/lib/utils";
 
 /** Screen 4 — single-session score (per-mod SDT). */
 export function AnalysisScreen({
@@ -33,6 +39,7 @@ export function AnalysisScreen({
 		[record],
 	);
 	const dp = meanDPrime(score);
+	const band = sensitivityBand(dp);
 	const acc = overallAccuracy(score);
 
 	return (
@@ -51,10 +58,18 @@ export function AnalysisScreen({
 				<div className="grid grid-cols-2 gap-4">
 					<Card>
 						<CardHeader>
-							<CardDescription>Mean d′ (sensitivity)</CardDescription>
+							<CardDescription>
+								Sensitivity{" "}
+								<span className="text-muted-foreground/70">(d′)</span>
+							</CardDescription>
 							<CardTitle className="text-3xl tabular-nums">
 								{fmtDPrime(dp)}
 							</CardTitle>
+							{band && (
+								<p className={cn("text-sm font-medium", band.tone)}>
+									{band.label}
+								</p>
+							)}
 						</CardHeader>
 					</Card>
 					<Card>
@@ -63,6 +78,9 @@ export function AnalysisScreen({
 							<CardTitle className="text-3xl tabular-nums">
 								{acc != null ? `${Math.round(acc * 100)}%` : "—"}
 							</CardTitle>
+							<p className="text-sm text-muted-foreground">
+								Correct calls overall
+							</p>
 						</CardHeader>
 					</Card>
 				</div>
@@ -71,8 +89,9 @@ export function AnalysisScreen({
 					<CardHeader>
 						<CardTitle>Per modality</CardTitle>
 						<CardDescription>
-							Hits / Misses / False alarms / Correct rejects, with signal
-							detection d′ and bias c.
+							Hits / Misses / False alarms / Correct rejects. Sensitivity (d′) is
+							how sharply you told matches from non-matches; bias (c) leans
+							negative if you over-respond, positive if you under-respond.
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -102,8 +121,18 @@ export function AnalysisScreen({
 										>
 											C
 										</th>
-										<th className="px-2 py-2 text-right font-medium">d′</th>
-										<th className="py-2 pl-2 text-right font-medium">c</th>
+										<th
+											className="px-2 py-2 text-right font-medium"
+											title="Sensitivity (d′)"
+										>
+											Sens.
+										</th>
+										<th
+											className="py-2 pl-2 text-right font-medium"
+											title="Bias (c)"
+										>
+											Bias
+										</th>
 									</tr>
 								</thead>
 								<tbody>

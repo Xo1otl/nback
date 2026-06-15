@@ -20,7 +20,7 @@ type Row = {
 	dp: number | null;
 };
 
-/** A tiny inline d′ trend line over chronological sessions. */
+/** A tiny inline sensitivity (d′) trend line over chronological sessions. */
 function Sparkline({ values }: { values: number[] }) {
 	const finite = values.filter((v) => Number.isFinite(v));
 	if (finite.length < 2) return null;
@@ -113,9 +113,9 @@ export function HistoryScreen({
 					<>
 						<Card>
 							<CardHeader>
-								<CardTitle>d′ trend</CardTitle>
+								<CardTitle>Sensitivity trend</CardTitle>
 								<CardDescription>
-									Mean sensitivity across {rows.length} sessions.
+									Mean sensitivity (d′) across {rows.length} sessions.
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
@@ -149,7 +149,9 @@ export function HistoryScreen({
 												</div>
 											</div>
 											<div className="text-right">
-												<div className="text-xs text-muted-foreground">d′</div>
+												<div className="text-xs text-muted-foreground">
+													Sensitivity
+												</div>
 												<div className="font-semibold tabular-nums">
 													{fmtDPrime(r.dp)}
 												</div>

@@ -18,7 +18,9 @@ import { cn } from "@/lib/utils";
 
 const OUTLINE = "oklch(1 0 0 / 0.45)";
 
-function ShapeBody({ kind, fill }: { kind: ShapeKind; fill: string }) {
+/** The shape geometry, as SVG within a `0 0 100 100` viewBox. Reused by the
+ * config option chips so the picker shows the exact in-game shapes. */
+export function ShapeBody({ kind, fill }: { kind: ShapeKind; fill: string }) {
 	const common = {
 		fill,
 		stroke: OUTLINE,

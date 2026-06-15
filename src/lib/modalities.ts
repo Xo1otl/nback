@@ -67,6 +67,20 @@ export function modMeta(id: game.ModID): ModMeta {
 	return META[id] ?? { id, label: id, description: "", Icon: Sparkles };
 }
 
+/** Human label for one modality option value (used by the config pickers). */
+export function optionLabel(mod: game.ModID, value: game.Option): string {
+	switch (mod) {
+		case game.MOD_COLOR:
+		case game.MOD_SHAPE:
+		case game.MOD_ANIMATION:
+			// Stable-id values are lowercase words → Title Case for display.
+			return value.charAt(0).toUpperCase() + value.slice(1);
+		default:
+			// character / audio: the glyph or spoken letter shows as-is.
+			return value;
+	}
+}
+
 /** The known modalities, in their canonical presentation order. */
 export const ALL_MODS: readonly game.ModID[] = [
 	game.MOD_POSITION,

@@ -13,7 +13,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shell } from "@/components/Shell";
+import { OptionPicker, ShapePicker } from "@/components/config/OptionPicker";
 import { ALL_MODS, modMeta } from "@/lib/modalities";
+import {
+	DEFAULT_POSITION_SHAPE,
+	matchPositionShape,
+	POSITION_SHAPES,
+} from "@/lib/positionShapes";
 import { randomSeed } from "@/lib/ids";
 import { cn } from "@/lib/utils";
 
@@ -109,7 +115,29 @@ function SliderField({
 	);
 }
 
-/** Screen 2 — build a `SessionConfig` (N, mods, timing, seed). */
+/** Initial per-mod option subset: the `initial` config's options, else the full
+ * canonical set. Position is driven by a shape picker instead, so it's omitted. */
+function initialModOptions(
+	initial: game.SessionConfig,
+): Record<game.ModID, ReadonlySet<game.Option>> {
+	const out: Record<game.ModID, ReadonlySet<game.Option>> = {};
+	for (const id of ALL_MODS) {
+		if (id === game.MOD_POSITION) continue;
+		const fromInitial = initial.mods.find((m) => m.mod === id)?.options;
+		const canonical = game.CANONICAL_OPTIONS[id] ?? [];
+		out[id] = new Set(fromInitial?.length ? fromInitial : canonical);
+	}
+	return out;
+}
+
+function initialShapeId(initial: game.SessionConfig): string {
+	const pos = initial.mods.find((m) => m.mod === game.MOD_POSITION);
+	return (
+		(pos && matchPositionShape(pos.options))?.id ?? DEFAULT_POSITION_SHAPE.id
+	);
+}
+
+/** Screen 2 — build a `SessionConfig` (N, mods + their option pools, timing, seed). */
 export function ConfigScreen({
 	initial,
 	onBack,
@@ -132,6 +160,10 @@ export function ConfigScreen({
 	const [selected, setSelected] = useState<Set<game.ModID>>(
 		() => new Set(initial.mods.map((m) => m.mod)),
 	);
+	const [modOptions, setModOptions] = useState<
+		Record<game.ModID, ReadonlySet<game.Option>>
+	>(() => initialModOptions(initial));
+	const [shapeId, setShapeId] = useState(() => initialShapeId(initial));
 	const [seedText, setSeedText] = useState("");
 	const [error, setError] = useState<string | null>(null);
 
@@ -144,27 +176,50 @@ export function ConfigScreen({
 		});
 	}
 
+	function toggleOption(mod: game.ModID, value: game.Option) {
+		setModOptions((prev) => {
+			const cur = new Set(prev[mod] ?? []);
+			if (cur.has(value)) {
+				if (cur.size <= 2) return prev; // keep |O_m| >= 2
+				cur.delete(value);
+			} else {
+				cur.add(value);
+			}
+			return { ...prev, [mod]: cur };
+		});
+	}
+
+	/** Build a mod's resolved options: position from the shape, others from the
+	 * picked subset (in canonical order so generation is order-stable). */
+	function optionsFor(id: game.ModID): game.OptionList {
+		if (id === game.MOD_POSITION) {
+			const shape =
+				POSITION_SHAPES.find((s) => s.id === shapeId) ?? DEFAULT_POSITION_SHAPE;
+			return shape.options;
+		}
+		const chosen = modOptions[id] ?? new Set<game.Option>();
+		return (game.CANONICAL_OPTIONS[id] ?? []).filter((o) => chosen.has(o));
+	}
+
 	function handleStart() {
 		const timing: game.TimingConfig = {
 			respondingDuration: respondingMs,
 			feedbackDuration: feedbackMs,
 		};
-		const base = game.defaultMultiplexConfig(
+		const config: game.SessionConfig = {
 			n,
 			problemCount,
-			matchPct / 100,
+			matchProbability: matchPct / 100,
 			timing,
-		);
-		const config: game.SessionConfig = {
-			...base,
-			mods: base.mods.filter((m) => selected.has(m.mod)),
+			mods: ALL_MODS.filter((id) => selected.has(id)).map((id) => ({
+				mod: id,
+				options: optionsFor(id),
+			})),
 		};
 		try {
 			game.validateAndResolveConfig(config);
 		} catch (err) {
-			setError(
-				err instanceof game.ConfigError ? err.message : String(err),
-			);
+			setError(err instanceof game.ConfigError ? err.message : String(err));
 			return;
 		}
 		onStart(config, seedText.trim() || randomSeed());
@@ -172,6 +227,7 @@ export function ConfigScreen({
 
 	const totalTrials = n + problemCount;
 	const canStart = selected.size > 0;
+	const enabledMods = ALL_MODS.filter((id) => selected.has(id));
 
 	return (
 		<Shell>
@@ -282,6 +338,51 @@ export function ConfigScreen({
 						</div>
 					</CardContent>
 				</Card>
+
+				{enabledMods.length > 0 && (
+					<Card>
+						<CardHeader>
+							<CardTitle>Stimulus pool</CardTitle>
+							<CardDescription>
+								Choose what each modality can show — at least two per modality.
+								Fewer options make matches easier to spot.
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="flex flex-col gap-5">
+							{enabledMods.map((id) => {
+								const meta = modMeta(id);
+								const isPosition = id === game.MOD_POSITION;
+								return (
+									<div key={id} className="flex flex-col gap-2">
+										<div className="flex items-center gap-2">
+											<meta.Icon className="size-4 text-muted-foreground" />
+											<span className="text-sm font-medium">{meta.label}</span>
+											{!isPosition && (
+												<span className="ml-auto text-xs tabular-nums text-muted-foreground">
+													{modOptions[id]?.size ?? 0} on
+												</span>
+											)}
+										</div>
+										{isPosition ? (
+											<ShapePicker
+												shapes={POSITION_SHAPES}
+												selectedId={shapeId}
+												onSelect={setShapeId}
+											/>
+										) : (
+											<OptionPicker
+												mod={id}
+												options={game.CANONICAL_OPTIONS[id] ?? []}
+												selected={modOptions[id] ?? new Set()}
+												onToggle={(v) => toggleOption(id, v)}
+											/>
+										)}
+									</div>
+								);
+							})}
+						</CardContent>
+					</Card>
+				)}
 
 				<Card>
 					<CardHeader>

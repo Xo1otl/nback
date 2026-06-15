@@ -35,7 +35,7 @@ import { Stage, type Grid } from "@/components/game/Stage";
 import { TideBar } from "@/components/game/TideBar";
 import { useDriverSnapshot, useGameSession } from "@/hooks/useSession";
 import { useGameKeyboard } from "@/hooks/useGameKeyboard";
-import { useStimulusAudio, warmUpSpeech } from "@/hooks/useStimulusAudio";
+import { useStimulusAudio, warmUpAudio } from "@/hooks/useStimulusAudio";
 import { ALL_MODS, modMeta } from "@/lib/modalities";
 import { gridDims, outcomeSkin } from "@/lib/modalityTheme";
 
@@ -118,7 +118,7 @@ function GameView({
 		else sessionDriver.engage(mod);
 	}
 	function start() {
-		warmUpSpeech();
+		warmUpAudio();
 		sessionDriver.start();
 	}
 	function seeResults() {
