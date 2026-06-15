@@ -72,19 +72,19 @@ func SDTFromCounts(c ModCounts, q StandardNormalQuantile) SDT {
 	}
 }
 
-func ProjectTrialFeedback(record game.SessionRecord, t game.TrialIndex) (TrialFeedback, error) {
+func ProjectTrialFeedback(record game.SessionRecord, t game.TrialIndex) (TrialFeedback, bool) {
 	// TODO: fold the events for trial t into per-modality judgments.
-	return TrialFeedback{}, nil
+	return TrialFeedback{}, false
 }
 
-func ProjectSessionScore(record game.SessionRecord, q StandardNormalQuantile) (SessionScore, error) {
+func ProjectSessionScore(record game.SessionRecord, q StandardNormalQuantile) SessionScore {
 	// TODO: aggregate judgments into per-modality counts + SDT, in spec order.
-	return SessionScore{}, nil
+	return SessionScore{}
 }
 
-func ReconstructTrials(record game.SessionRecord) ([]TrialFeedback, error) {
+func ReconstructTrials(record game.SessionRecord) []TrialFeedback {
 	// TODO: ProjectTrialFeedback across every trial.
-	return nil, nil
+	return nil
 }
 
 const (

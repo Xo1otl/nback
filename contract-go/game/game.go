@@ -3,7 +3,6 @@ package game
 type (
 	SessionID      string
 	TrialIndex     int
-	EventSeq       int64
 	Milliseconds   int64
 	VSyncStamp     int64
 	Probability    float64
@@ -11,7 +10,6 @@ type (
 	RandomSeed     string
 	ModID          string
 	ResponseAction string
-	EventKind      string
 	EventResult    string
 	ReasonCode     string
 	Phase          string
@@ -86,19 +84,42 @@ func (t TrialStimulus) Value(id ModID) (Option, bool) {
 	return "", false
 }
 
-type SessionState struct {
-	Phase Phase
-	Trial TrialIndex
-}
-
-type DomainEventRecord struct {
-	Seq    EventSeq
-	Kind   EventKind
-	Result EventResult
-	Reason ReasonCode
-	Trial  TrialIndex
+type ModResponse struct {
 	Mod    ModID
 	Action ResponseAction
+}
+
+type SessionState struct {
+	Phase           Phase
+	Trial           TrialIndex
+	RespondingOnset Milliseconds
+	Responses       []ModResponse
+}
+
+func (s SessionState) Response(id ModID) (ResponseAction, bool) {
+	for _, r := range s.Responses {
+		if r.Mod == id {
+			return r.Action, true
+		}
+	}
+	return ActionDisengage, false
+}
+
+type Event any
+
+type Responded struct {
+	Offset Milliseconds
+	Mod    ModID
+	Action ResponseAction
+	Result EventResult
+	Reason ReasonCode
+}
+
+type TrialClosed struct {
+	Offset Milliseconds
+}
+
+type TrialAdvanced struct {
 	Offset Milliseconds
 }
 
@@ -109,20 +130,19 @@ type SessionRecord struct {
 	Seed    RandomSeed
 	Stimuli StimulusTrace
 	Origin  VSyncStamp
-	Events  []DomainEventRecord
+	Events  []Event
 }
 
-type Session struct {
-	record SessionRecord
-	state  SessionState
-}
-
-func (s *Session) Record() SessionRecord {
-	return s.record
-}
-
-func (s *Session) State() SessionState {
-	return s.state
+func NewSessionRecord(id SessionID, spec SessionSpec, seed RandomSeed, stimuli StimulusTrace, origin VSyncStamp, events []Event) SessionRecord {
+	return SessionRecord{
+		Version: SessionRecordVersion,
+		ID:      id,
+		Spec:    spec,
+		Seed:    seed,
+		Stimuli: stimuli,
+		Origin:  origin,
+		Events:  events,
+	}
 }
 
 func GenerateStimuli(spec SessionSpec, rng RandomSource) (StimulusTrace, error) {
@@ -130,35 +150,28 @@ func GenerateStimuli(spec SessionSpec, rng RandomSource) (StimulusTrace, error) 
 	return nil, nil
 }
 
-func StartSession(
-	id SessionID,
-	cfg SessionConfig,
-	seed RandomSeed,
-	rng RandomSource,
-	origin VSyncStamp,
-) (*Session, error) {
-	// TODO: ValidateAndResolveConfig(cfg) -> spec, generate stimuli with rng.
-	return nil, nil
+func StartSession(cfg SessionConfig, rng RandomSource) (SessionSpec, StimulusTrace, SessionState, error) {
+	// TODO: ValidateAndResolveConfig(cfg) -> spec; GenerateStimuli(spec, rng) -> stimuli.
+	// Initial state is responding(0) with no responses: SessionState{Phase: PhaseResponding}.
+	return SessionSpec{}, nil, SessionState{}, nil
 }
 
-func RestoreSession(record SessionRecord) (*Session, error) {
-	// TODO: validate invariants and rebuild the aggregate from the record.
-	return nil, nil
+func Respond(spec SessionSpec, state SessionState, m ModID, action ResponseAction, offset Milliseconds) (Responded, SessionState) {
+	// TODO: validate against spec+state (responding, scored, mod enabled, window); set Result/Reason.
+	// On an accepted response, fold it into state.Responses (last accepted action
+	// per mod wins); otherwise return state unchanged. Responding never changes
+	// Phase/Trial.
+	return Responded{}, state
 }
 
-func (s *Session) Respond(m ModID, action ResponseAction, offset Milliseconds) DomainEventRecord {
-	// TODO: append a respond event; set Result/Reason.
-	return DomainEventRecord{}
+func CloseTrial(state SessionState, offset Milliseconds) (TrialClosed, SessionState) {
+	// TODO: responding -> feedback.
+	return TrialClosed{}, state
 }
 
-func (s *Session) CloseTrial(offset Milliseconds) DomainEventRecord {
-	// TODO: transition responding -> feedback.
-	return DomainEventRecord{}
-}
-
-func (s *Session) NextTrial(offset Milliseconds) DomainEventRecord {
-	// TODO: advance trial / transition feedback -> responding or done.
-	return DomainEventRecord{}
+func NextTrial(spec SessionSpec, state SessionState, offset Milliseconds) (TrialAdvanced, SessionState) {
+	// TODO: feedback -> responding(t+1) (set RespondingOnset = offset, reset Responses), or done.
+	return TrialAdvanced{}, state
 }
 
 func ValidateAndResolveConfig(cfg SessionConfig) (SessionSpec, error) {
@@ -208,13 +221,6 @@ const (
 const (
 	ActionEngage    ResponseAction = "engage"
 	ActionDisengage ResponseAction = "disengage"
-)
-
-const (
-	EventSessionStarted EventKind = "sessionStarted"
-	EventRespond        EventKind = "respond"
-	EventCloseTrial     EventKind = "closeTrial"
-	EventNextTrial      EventKind = "nextTrial"
 )
 
 const (

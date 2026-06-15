@@ -1,0 +1,91 @@
+/**
+ * Signal Detection Theory with log-linear correction (§Scoring).
+ *
+ *   HR  = (H + 0.5) / (H + M + 1)
+ *   FAR = (F + 0.5) / (F + C + 1)
+ *   d'  = Z(HR) - Z(FAR)
+ *   c   = -(Z(HR) + Z(FAR)) / 2
+ *
+ * The +0.5 / +1 correction keeps HR, FAR strictly in (0, 1), so Z is always
+ * finite. Z is the inverse standard-normal CDF; a default implementation
+ * ({@link standardNormalQuantile}) is provided, and any other can be injected.
+ */
+
+import type * as game from "@/game";
+import type { ModCounts, SDT, StandardNormalQuantile } from "./_types";
+
+export type CorrectedRates = {
+	readonly hr: game.Probability;
+	readonly far: game.Probability;
+};
+
+export function correctedRates(c: ModCounts): CorrectedRates {
+	return {
+		hr: (c.h + 0.5) / (c.h + c.m + 1),
+		far: (c.f + 0.5) / (c.f + c.c + 1),
+	};
+}
+
+export function sdtFromCounts(c: ModCounts, q: StandardNormalQuantile): SDT {
+	const { hr, far } = correctedRates(c);
+	const zHR = q(hr);
+	const zFAR = q(far);
+	return {
+		dPrime: zHR - zFAR,
+		criterion: -(zHR + zFAR) / 2,
+	};
+}
+
+// Peter Acklam's rational approximation of the inverse normal CDF.
+// Relative error < ~1.15e-9 across (0, 1).
+const A = [
+	-3.969683028665376e1, 2.209460984245205e2, -2.759285104469687e2,
+	1.38357751867269e2, -3.066479806614716e1, 2.506628277459239,
+];
+const B = [
+	-5.447609879822406e1, 1.615858368580409e2, -1.556989798598866e2,
+	6.680131188771972e1, -1.328068155288572e1,
+];
+const C = [
+	-7.784894002430293e-3, -3.223964580411365e-1, -2.400758277161838,
+	-2.549732539343734, 4.374664141464968, 2.938163982698783,
+];
+const D = [
+	7.784695709041462e-3, 3.224671290700398e-1, 2.445134137142996,
+	3.754408661907416,
+];
+const P_LOW = 0.02425;
+const P_HIGH = 1 - P_LOW;
+
+/** Default Z(p): inverse CDF of the standard normal distribution. */
+export const standardNormalQuantile: StandardNormalQuantile = (
+	p: game.Probability,
+): number => {
+	if (p <= 0) return -Infinity;
+	if (p >= 1) return Infinity;
+
+	if (p < P_LOW) {
+		const q = Math.sqrt(-2 * Math.log(p));
+		return (
+			(((((C[0]! * q + C[1]!) * q + C[2]!) * q + C[3]!) * q + C[4]!) * q +
+				C[5]!) /
+			((((D[0]! * q + D[1]!) * q + D[2]!) * q + D[3]!) * q + 1)
+		);
+	}
+	if (p <= P_HIGH) {
+		const q = p - 0.5;
+		const r = q * q;
+		return (
+			((((((A[0]! * r + A[1]!) * r + A[2]!) * r + A[3]!) * r + A[4]!) * r +
+				A[5]!) *
+				q) /
+			(((((B[0]! * r + B[1]!) * r + B[2]!) * r + B[3]!) * r + B[4]!) * r + 1)
+		);
+	}
+	const q = Math.sqrt(-2 * Math.log(1 - p));
+	return -(
+		(((((C[0]! * q + C[1]!) * q + C[2]!) * q + C[3]!) * q + C[4]!) * q +
+			C[5]!) /
+		((((D[0]! * q + D[1]!) * q + D[2]!) * q + D[3]!) * q + 1)
+	);
+};

@@ -32,7 +32,7 @@ Derived:
 
 Pure deterministic state machine.
 
-* **`respond(m, action, offset)`:** Log: `[(action, offset), ...]`. action: engage|disengage. Validate: responding, scored, mod enabled, `offset - respondingOnset.offset <= respondingDuration`.
+* **`respond(m, action, offset)`:** Log: `[(action, offset), ...]`. action: engage|disengage. Validate: responding, scored, mod enabled, `offset - respondingOnset.offset <= respondingDuration`. An accepted response also folds into session state as the mod's **final action** (last accepted wins, default disengage), reset on `nextTrial` — this backs live feedback; the full log backs analysis.
 * **`closeTrial(offset)`:** `responding(t)` $\rightarrow$ `feedback(t)`.
 * **`nextTrial(offset)`:** `feedback(t)` $\rightarrow$ `responding(t+1)` or `done`.
 
