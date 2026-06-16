@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Check, Dices, Minus, Play, Plus } from "lucide-react";
+import { ArrowLeft, Check, Minus, Plus } from "lucide-react";
 
 import * as game from "@/game";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,6 @@ import {
 	matchPositionShape,
 	POSITION_SHAPES,
 } from "@/lib/positionShapes";
-import { randomSeed } from "@/lib/ids";
 import { cn } from "@/lib/utils";
 
 /** A labeled integer stepper with −/+ and a number input. */
@@ -137,16 +136,17 @@ function initialShapeId(initial: game.SessionConfig): string {
 	);
 }
 
-/** Screen 2 — build a `SessionConfig` (N, mods + their option pools, timing, seed). */
+/** Screen 2 — a settings editor for the next session (N, mods + their option
+ * pools, timing). Not a launch point: Back commits the edited config upward
+ * (the next Play uses it); there is no separate start action. */
 export function ConfigScreen({
 	initial,
 	onBack,
-	onStart,
 }: {
 	/** Pre-fills the form (the current/last-used config). */
 	initial: game.SessionConfig;
-	onBack: () => void;
-	onStart: (config: game.SessionConfig, seed: game.RandomSeed) => void;
+	/** Commit the edited settings and leave the screen. */
+	onBack: (config: game.SessionConfig) => void;
 }) {
 	const [n, setN] = useState(initial.n);
 	const [problemCount, setProblemCount] = useState(initial.problemCount);
@@ -164,14 +164,16 @@ export function ConfigScreen({
 		Record<game.ModID, ReadonlySet<game.Option>>
 	>(() => initialModOptions(initial));
 	const [shapeId, setShapeId] = useState(() => initialShapeId(initial));
-	const [seedText, setSeedText] = useState("");
-	const [error, setError] = useState<string | null>(null);
 
 	function toggleMod(id: game.ModID) {
 		setSelected((prev) => {
 			const next = new Set(prev);
-			if (next.has(id)) next.delete(id);
-			else next.add(id);
+			if (next.has(id)) {
+				if (next.size <= 1) return prev; // keep >= 1 modality enabled
+				next.delete(id);
+			} else {
+				next.add(id);
+			}
 			return next;
 		});
 	}
@@ -201,32 +203,26 @@ export function ConfigScreen({
 		return (game.CANONICAL_OPTIONS[id] ?? []).filter((o) => chosen.has(o));
 	}
 
-	function handleStart() {
-		const timing: game.TimingConfig = {
-			respondingDuration: respondingMs,
-			feedbackDuration: feedbackMs,
-		};
-		const config: game.SessionConfig = {
+	/** Project the form state into a `SessionConfig`. Always valid by
+	 * construction: every field is clamped to a legal range, each modality keeps
+	 * >= 2 options, and at least one modality stays enabled. */
+	function buildConfig(): game.SessionConfig {
+		return {
 			n,
 			problemCount,
 			matchProbability: matchPct / 100,
-			timing,
+			timing: {
+				respondingDuration: respondingMs,
+				feedbackDuration: feedbackMs,
+			},
 			mods: ALL_MODS.filter((id) => selected.has(id)).map((id) => ({
 				mod: id,
 				options: optionsFor(id),
 			})),
 		};
-		try {
-			game.validateAndResolveConfig(config);
-		} catch (err) {
-			setError(err instanceof game.ConfigError ? err.message : String(err));
-			return;
-		}
-		onStart(config, seedText.trim() || randomSeed());
 	}
 
 	const totalTrials = n + problemCount;
-	const canStart = selected.size > 0;
 	const enabledMods = ALL_MODS.filter((id) => selected.has(id));
 
 	return (
@@ -237,11 +233,11 @@ export function ConfigScreen({
 						variant="ghost"
 						size="icon"
 						aria-label="Back"
-						onClick={onBack}
+						onClick={() => onBack(buildConfig())}
 					>
 						<ArrowLeft />
 					</Button>
-					<h1 className="text-2xl font-semibold tracking-tight">New session</h1>
+					<h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
 				</div>
 
 				<Card>
@@ -311,17 +307,24 @@ export function ConfigScreen({
 							{ALL_MODS.map((id) => {
 								const meta = modMeta(id);
 								const on = selected.has(id);
+								// The last enabled modality can't be turned off (>= 1 required).
+								const locked = on && selected.size <= 1;
 								return (
 									<button
 										key={id}
 										type="button"
 										aria-pressed={on}
-										onClick={() => toggleMod(id)}
+										aria-disabled={locked}
+										title={locked ? "Keep at least one modality" : undefined}
+										onClick={() => {
+											if (!locked) toggleMod(id);
+										}}
 										className={cn(
 											"relative flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors",
 											on
 												? "border-primary bg-primary/10"
 												: "border-border bg-card hover:bg-accent",
+											locked && "cursor-not-allowed",
 										)}
 									>
 										{on && (
@@ -339,98 +342,48 @@ export function ConfigScreen({
 					</CardContent>
 				</Card>
 
-				{enabledMods.length > 0 && (
-					<Card>
-						<CardHeader>
-							<CardTitle>Stimulus pool</CardTitle>
-							<CardDescription>
-								Choose what each modality can show — at least two per modality.
-								Fewer options make matches easier to spot.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="flex flex-col gap-5">
-							{enabledMods.map((id) => {
-								const meta = modMeta(id);
-								const isPosition = id === game.MOD_POSITION;
-								return (
-									<div key={id} className="flex flex-col gap-2">
-										<div className="flex items-center gap-2">
-											<meta.Icon className="size-4 text-muted-foreground" />
-											<span className="text-sm font-medium">{meta.label}</span>
-											{!isPosition && (
-												<span className="ml-auto text-xs tabular-nums text-muted-foreground">
-													{modOptions[id]?.size ?? 0} on
-												</span>
-											)}
-										</div>
-										{isPosition ? (
-											<ShapePicker
-												shapes={POSITION_SHAPES}
-												selectedId={shapeId}
-												onSelect={setShapeId}
-											/>
-										) : (
-											<OptionPicker
-												mod={id}
-												options={game.CANONICAL_OPTIONS[id] ?? []}
-												selected={modOptions[id] ?? new Set()}
-												onToggle={(v) => toggleOption(id, v)}
-											/>
-										)}
-									</div>
-								);
-							})}
-						</CardContent>
-					</Card>
-				)}
-
 				<Card>
 					<CardHeader>
-						<CardTitle>Seed</CardTitle>
+						<CardTitle>Stimulus pool</CardTitle>
 						<CardDescription>
-							Same seed + settings reproduce the same stimuli. Leave blank for
-							random.
+							Choose what each modality can show — at least two per modality.
+							Fewer options make matches easier to spot.
 						</CardDescription>
 					</CardHeader>
-					<CardContent>
-						<div className="flex items-center gap-2">
-							<Input
-								placeholder="(random)"
-								value={seedText}
-								onChange={(e) => setSeedText(e.target.value)}
-							/>
-							<Button
-								type="button"
-								variant="outline"
-								size="icon"
-								aria-label="Randomize seed"
-								onClick={() => setSeedText(randomSeed())}
-							>
-								<Dices />
-							</Button>
-						</div>
+					<CardContent className="flex flex-col gap-5">
+						{enabledMods.map((id) => {
+							const meta = modMeta(id);
+							const isPosition = id === game.MOD_POSITION;
+							return (
+								<div key={id} className="flex flex-col gap-2">
+									<div className="flex items-center gap-2">
+										<meta.Icon className="size-4 text-muted-foreground" />
+										<span className="text-sm font-medium">{meta.label}</span>
+										{!isPosition && (
+											<span className="ml-auto text-xs tabular-nums text-muted-foreground">
+												{modOptions[id]?.size ?? 0} on
+											</span>
+										)}
+									</div>
+									{isPosition ? (
+										<ShapePicker
+											shapes={POSITION_SHAPES}
+											selectedId={shapeId}
+											onSelect={setShapeId}
+										/>
+									) : (
+										<OptionPicker
+											mod={id}
+											options={game.CANONICAL_OPTIONS[id] ?? []}
+											selected={modOptions[id] ?? new Set()}
+											onToggle={(v) => toggleOption(id, v)}
+										/>
+									)}
+								</div>
+							);
+						})}
 					</CardContent>
 				</Card>
-
-				{error && (
-					<p className="text-sm text-destructive" role="alert">
-						{error}
-					</p>
-				)}
-
-				<Button
-					size="lg"
-					className="w-full"
-					disabled={!canStart}
-					onClick={handleStart}
-				>
-					<Play /> Start session
-				</Button>
-				{!canStart && (
-					<p className="text-center text-sm text-muted-foreground">
-						Select at least one modality.
-					</p>
-				)}
 			</div>
 		</Shell>
 	);

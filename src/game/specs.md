@@ -41,7 +41,7 @@ Pure deterministic state machine.
 Independent streams. Each enabled mod requires config set $O_m \subseteq \text{canonical universe}$, $k_m = |O_m| \geq 2$.
 
 * **Position:** Coordinate IDs (e.g. r0c1).
-* **Color:** red, green, purple, black.
+* **Color:** red, green, purple, blue.
 * **Character:** 0–9, A, B, C, D, E, H, K, L, M, O.
 * **Shape:** triangle, square, pentagon, ellipse.
 * **Audio:** A, B, C, H, K, L, M, O (spoken).
@@ -61,7 +61,7 @@ Independent per mod/trial.
 * **Timing:** respondingDuration, feedbackDuration (mostly driver only, not logic)
 * **Mods (>=1 enabled, k>=2 subset per mod, defaults=canonical):**
 * Position: enable | subset {coordinate IDs}
-* Color: enable | subset {red, green, purple, black}
+* Color: enable | subset {red, green, purple, blue}
 * Character: enable | subset {0-9, A-E, H, K-M, O}
 * Shape: enable | subset {triangle, square, pentagon, ellipse}
 * Audio: enable | subset {A-C, H, K-M, O}

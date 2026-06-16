@@ -17,7 +17,8 @@ export function Shell({
 	return (
 		<div
 			className={cn(
-				"flex min-h-screen w-full flex-col items-center px-4 py-6 sm:py-10",
+				// `relative` so screens can anchor corner controls (e.g. ThemeToggle).
+				"relative flex min-h-screen w-full flex-col items-center px-4 py-6 sm:py-10",
 				className,
 			)}
 		>

@@ -34,10 +34,7 @@ export function AnalysisScreen({
 	onHistory: () => void;
 	onHome: () => void;
 }) {
-	const score = useMemo(
-		() => analysis.projectSessionScore(record),
-		[record],
-	);
+	const score = useMemo(() => analysis.projectSessionScore(record), [record]);
 	const dp = meanDPrime(score);
 	const band = sensitivityBand(dp);
 	const acc = overallAccuracy(score);
@@ -98,8 +95,8 @@ export function AnalysisScreen({
 					<CardHeader>
 						<CardTitle>Per modality</CardTitle>
 						<CardDescription>
-							Hits / Misses / False alarms / Correct rejects. Sensitivity (d′) is
-							how sharply you told matches from non-matches; bias (c) leans
+							Hits / Misses / False alarms / Correct rejects. Sensitivity (d′)
+							is how sharply you told matches from non-matches; bias (c) leans
 							negative if you over-respond, positive if you under-respond.
 						</CardDescription>
 					</CardHeader>
@@ -109,7 +106,10 @@ export function AnalysisScreen({
 								<thead>
 									<tr className="border-b text-left text-muted-foreground">
 										<th className="py-2 pr-2 font-medium">Modality</th>
-										<th className="px-2 py-2 text-center font-medium" title="Hits">
+										<th
+											className="px-2 py-2 text-center font-medium"
+											title="Hits"
+										>
 											H
 										</th>
 										<th
@@ -195,10 +195,6 @@ export function AnalysisScreen({
 						<Home /> Home
 					</Button>
 				</div>
-
-				<p className="text-center text-xs text-muted-foreground">
-					Seed <Badge variant="secondary">{record.seed}</Badge>
-				</p>
 			</div>
 		</Shell>
 	);

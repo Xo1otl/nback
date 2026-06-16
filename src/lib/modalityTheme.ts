@@ -13,16 +13,17 @@ import * as game from "@/game";
 
 // ---- Stimulus colors -------------------------------------------------------
 //
-// The semantic `--primary` token is near-WHITE in this dark theme, so stimulus
-// fills must NOT reuse semantic tokens — they are fixed, dark-stage-tuned
-// swatches. Every shape also carries a light parity outline (see the renderer)
-// so "black" never vanishes against the dark stage.
+// Semantic tokens (e.g. `--primary`) flip between the light and dark themes, so
+// stimulus fills must NOT reuse them — they are fixed, mid-tone saturated
+// swatches chosen to read against BOTH the light and dark stage backgrounds.
+// Each shape also carries a theme-aware parity outline (`--stim-outline`, see
+// the renderer) that flips light/dark with the stage for edge definition.
 
 export const STIM_COLORS: Record<string, string> = {
 	[game.COLOR_RED]: "oklch(0.62 0.21 25)",
 	[game.COLOR_GREEN]: "oklch(0.70 0.17 150)",
 	[game.COLOR_PURPLE]: "oklch(0.58 0.24 300)",
-	[game.COLOR_BLACK]: "oklch(0.22 0 0)",
+	[game.COLOR_BLUE]: "oklch(0.55 0.19 255)",
 };
 
 const GLYPH_DARK = "oklch(0.16 0 0)";
@@ -37,7 +38,7 @@ export function fillFor(color: string | undefined): string {
 /** Auto-contrast glyph color for the character drawn over a given fill. */
 export function glyphFill(color: string | undefined): string {
 	// Green and the muted (color-disabled) fill are light → dark ink; the
-	// saturated/black fills are dark → light ink.
+	// saturated fills (red / purple / blue) are darker → light ink.
 	if (color === undefined || color === game.COLOR_GREEN) return GLYPH_DARK;
 	return GLYPH_LIGHT;
 }
@@ -96,25 +97,31 @@ export type OutcomeSkin = {
 
 // Literal keys (not the `OUTCOME_*` constants, whose type is the full union)
 // so this satisfies `Record<Outcome, OutcomeSkin>`.
+// Each skin pairs a light-mode (`-700`) and dark-mode (`dark:-300`) text shade
+// so the feedback reads on both stages; the alpha-tinted bg/border work as-is.
 const SKINS: Record<game.Outcome, OutcomeSkin> = {
 	H: {
 		word: "Hit",
-		className: "bg-emerald-500/15 text-emerald-300 border-emerald-500/40",
+		className:
+			"bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40",
 		Icon: Check,
 	},
 	M: {
 		word: "Miss",
-		className: "bg-amber-500/15 text-amber-300 border-amber-500/40",
+		className:
+			"bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40",
 		Icon: ArrowUp,
 	},
 	F: {
 		word: "False",
-		className: "bg-rose-500/15 text-rose-300 border-rose-500/40",
+		className:
+			"bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/40",
 		Icon: X,
 	},
 	C: {
 		word: "Pass",
-		className: "bg-teal-500/15 text-teal-300 border-teal-500/40",
+		className:
+			"bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/40",
 		Icon: Minus,
 	},
 };

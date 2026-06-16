@@ -16,7 +16,10 @@ import {
 } from "@/lib/modalityTheme";
 import { cn } from "@/lib/utils";
 
-const OUTLINE = "oklch(1 0 0 / 0.45)";
+// Theme-aware parity outline: a light rim on the dark stage, a dark rim on the
+// light stage (defined as `--stim-outline` in index.css) so every shape keeps a
+// crisp edge against the current stage background in both themes.
+const OUTLINE = "var(--stim-outline)";
 
 /** The shape geometry, as SVG within a `0 0 100 100` viewBox. Reused by the
  * config option chips so the picker shows the exact in-game shapes. */

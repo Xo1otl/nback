@@ -8,6 +8,23 @@
     <link rel="apple-touch-icon" href="./favicon.svg" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <title>n-back</title>
+    <script>
+      // Apply the saved / OS theme before first paint to avoid a flash. Mirrors
+      // STORAGE_KEY + the resolution in src/lib/theme.ts — keep them in sync.
+      // The static class="dark" on <html> is the no-JS fallback.
+      (function () {
+        try {
+          var stored = localStorage.getItem("nback.theme.v1");
+          var dark =
+            stored === "dark" ||
+            (stored !== "light" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", dark);
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", dark ? "#0b0b0b" : "#ffffff");
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -50,9 +50,14 @@ export function sensitivityBand(
 	d: number | null | undefined,
 ): SensitivityBand | null {
 	if (d == null || !Number.isFinite(d)) return null;
+	// Paired light (`-700`) / dark (`dark:-300`) shades so the band reads on
+	// both themes; "Guessing" stays on the theme-aware muted token.
 	if (d < 0.5) return { label: "Guessing", tone: "text-muted-foreground" };
-	if (d < 1.5) return { label: "Developing", tone: "text-amber-300" };
-	if (d < 2.5) return { label: "Solid", tone: "text-teal-300" };
-	if (d < 3.5) return { label: "Sharp", tone: "text-emerald-300" };
-	return { label: "Elite", tone: "text-emerald-300" };
+	if (d < 1.5)
+		return { label: "Developing", tone: "text-amber-700 dark:text-amber-300" };
+	if (d < 2.5)
+		return { label: "Solid", tone: "text-teal-700 dark:text-teal-300" };
+	if (d < 3.5)
+		return { label: "Sharp", tone: "text-emerald-700 dark:text-emerald-300" };
+	return { label: "Elite", tone: "text-emerald-700 dark:text-emerald-300" };
 }

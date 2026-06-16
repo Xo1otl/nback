@@ -348,7 +348,7 @@ export const MOD_ANIMATION: ModID = "animation";
 export const COLOR_RED: Option = "red";
 export const COLOR_GREEN: Option = "green";
 export const COLOR_PURPLE: Option = "purple";
-export const COLOR_BLACK: Option = "black";
+export const COLOR_BLUE: Option = "blue";
 
 export const SHAPE_TRIANGLE: Option = "triangle";
 export const SHAPE_SQUARE: Option = "square";
@@ -365,7 +365,7 @@ export const CANONICAL_COLOR: OptionList = [
 	COLOR_RED,
 	COLOR_GREEN,
 	COLOR_PURPLE,
-	COLOR_BLACK,
+	COLOR_BLUE,
 ];
 
 export const CANONICAL_CHARACTER: OptionList = [

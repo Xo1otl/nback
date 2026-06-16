@@ -9,6 +9,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Shell } from "@/components/Shell";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 /** Screen 1 — entry / menu. */
 export function TopScreen({
@@ -22,6 +23,7 @@ export function TopScreen({
 }) {
 	return (
 		<Shell className="justify-center">
+			<ThemeToggle className="absolute right-3 top-3 sm:right-4 sm:top-4" />
 			<div className="flex w-full max-w-md flex-col items-center gap-8">
 				<div className="flex flex-col items-center gap-3 text-center">
 					<div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">

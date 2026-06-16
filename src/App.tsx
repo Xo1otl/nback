@@ -1,9 +1,10 @@
 import "./index.css";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type * as game from "@/game";
 import * as storage from "@/storage";
+import * as theme from "@/lib/theme";
 import { AnalysisScreen } from "@/components/AnalysisScreen";
 import { ConfigScreen } from "@/components/ConfigScreen";
 import { GameScreen } from "@/components/game/GameScreen";
@@ -41,6 +42,13 @@ export function App() {
 	// The current/last config: instant Play and the config form both start here.
 	const [config, setConfig] = useState<game.SessionConfig>(initialConfig);
 
+	// Apply the persisted theme on mount. The inline script in index.html already
+	// did this pre-paint (no flash); this is the React-side source of truth and a
+	// safety net should that script ever be stripped. Idempotent.
+	useEffect(() => {
+		theme.applyStoredTheme();
+	}, []);
+
 	function startGame(cfg: game.SessionConfig, seed: game.RandomSeed) {
 		setConfig(cfg);
 		setScreen({ k: "game", config: cfg, id: newSessionId(), seed });
@@ -59,8 +67,12 @@ export function App() {
 			return (
 				<ConfigScreen
 					initial={config}
-					onBack={() => setScreen({ k: "top" })}
-					onStart={(cfg, seed) => startGame(cfg, seed)}
+					// Config is a settings editor, not a launch point: Back commits the
+					// edited settings so the next Play (from top) uses them.
+					onBack={(cfg) => {
+						setConfig(cfg);
+						setScreen({ k: "top" });
+					}}
 				/>
 			);
 		case "game":
