@@ -168,3 +168,19 @@ export function defaultQuery(spec: game.SessionSpec): string {
 	const mods = spec.mods.map((m) => `${KEY_FOR_MOD[m.mod] ?? m.mod}:*`);
 	return [`n:${spec.n}`, ...mods].join(" ");
 }
+
+/** The EXACT criteria of a session as a query string — n, every enabled
+ * modality with its full option set, match rate, and timing — so it can be
+ * pasted into the History search to find/compare like sessions. Round-trips:
+ * `matchesQuery(spec, parseQuery(queryForSpec(spec)))` is always true. */
+export function queryForSpec(spec: game.SessionSpec): string {
+	const parts = [`n:${spec.n}`];
+	for (const m of spec.mods) {
+		const key = KEY_FOR_MOD[m.mod] ?? m.mod;
+		parts.push(m.options.length > 0 ? `${key}:${m.options.join(",")}` : `${key}:*`);
+	}
+	parts.push(`match:${Math.round(spec.matchProbability * 100)}`);
+	parts.push(`time:${spec.timing.respondingDuration}`);
+	parts.push(`fb:${spec.timing.feedbackDuration}`);
+	return parts.join(" ");
+}

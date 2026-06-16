@@ -341,7 +341,8 @@ export function ConfigScreen({
 						<CardTitle>Stimulus pool</CardTitle>
 						<CardDescription>
 							Choose what each modality can show — at least two per modality.
-							Fewer options make matches easier to spot.
+							With fewer options the values recur and blur together, so a
+							smaller pool is harder.
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-col gap-5">

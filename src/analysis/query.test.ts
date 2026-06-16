@@ -113,3 +113,24 @@ describe("defaultQuery", () => {
 		);
 	});
 });
+
+describe("queryForSpec", () => {
+	test("emits exact criteria and round-trips against its own spec", () => {
+		const s = spec(
+			3,
+			[
+				{ mod: game.MOD_COLOR, opts: ["red", "green", "blue"] },
+				{ mod: game.MOD_CHARACTER, opts: ["A", "B"] },
+			],
+			{ matchProbability: 0.3 },
+		);
+		const q = analysis.queryForSpec(s);
+		expect(q).toContain("n:3");
+		expect(q).toContain("color:red,green,blue");
+		expect(q).toContain("char:A,B");
+		expect(q).toContain("match:30");
+		expect(q).toContain("time:2000");
+		expect(q).toContain("fb:500");
+		expect(match(q, s)).toBe(true);
+	});
+});

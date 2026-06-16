@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Home, History, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Check, Copy, Home, History, RotateCcw } from "lucide-react";
 
 import * as analysis from "@/analysis";
 import * as game from "@/game";
@@ -21,6 +21,34 @@ import {
 	sensitivityBand,
 } from "@/lib/score";
 import { cn } from "@/lib/utils";
+
+/** Copies this session's exact criteria as a History search query (see
+ * `analysis.queryForSpec`), so it can be pasted into the search to find/compare
+ * like sessions. The query is also the button's `title` so it stays selectable
+ * if the Clipboard API is unavailable (e.g. an insecure context). */
+function CopyQueryButton({ query }: { query: string }) {
+	const [copied, setCopied] = useState(false);
+	return (
+		<Button
+			variant="ghost"
+			size="sm"
+			className="text-muted-foreground"
+			title={query}
+			onClick={async () => {
+				try {
+					await navigator.clipboard.writeText(query);
+					setCopied(true);
+					setTimeout(() => setCopied(false), 1500);
+				} catch {
+					// Clipboard unavailable — the title attribute keeps the query visible.
+				}
+			}}
+		>
+			{copied ? <Check /> : <Copy />}
+			{copied ? "Copied" : "Copy query"}
+		</Button>
+	);
+}
 
 /** Screen 4 — single-session score (per-mod SDT). */
 export function AnalysisScreen({
@@ -54,6 +82,9 @@ export function AnalysisScreen({
 						{record.spec.n}-back · {record.spec.problemCount} scored trials ·{" "}
 						{record.spec.mods.length} modalities
 					</p>
+					<div className="mt-1 flex justify-center">
+						<CopyQueryButton query={analysis.queryForSpec(record.spec)} />
+					</div>
 				</div>
 
 				<div className="grid grid-cols-2 gap-4">
@@ -186,7 +217,7 @@ export function AnalysisScreen({
 
 				<div className="flex flex-wrap gap-3">
 					<Button className="flex-1" onClick={onPlayAgain}>
-						<RotateCcw /> Play again (same settings)
+						<RotateCcw /> Play &amp; make these current
 					</Button>
 					<Button variant="outline" onClick={onHistory}>
 						<History /> History

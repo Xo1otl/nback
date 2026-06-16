@@ -51,4 +51,5 @@ export {
 	parseQuery,
 	matchesQuery,
 	defaultQuery,
+	queryForSpec,
 } from "./_query";
