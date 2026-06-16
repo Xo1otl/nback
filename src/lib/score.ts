@@ -27,13 +27,6 @@ export function fmtDPrime(d: number | null | undefined): string {
 	return d != null && Number.isFinite(d) ? d.toFixed(2) : "—";
 }
 
-/**
- * The human-facing name for d′ — it's an unlabeled symbol to most players, so
- * the UI reads "Sensitivity" with d′ kept only as a parenthetical for the
- * initiated.
- */
-export const SENSITIVITY_LABEL = "Sensitivity";
-
 export type SensitivityBand = {
 	/** A one-word qualitative read of the d′ value. */
 	readonly label: string;
@@ -60,4 +53,10 @@ export function sensitivityBand(
 	if (d < 3.5)
 		return { label: "Sharp", tone: "text-emerald-700 dark:text-emerald-300" };
 	return { label: "Elite", tone: "text-emerald-700 dark:text-emerald-300" };
+}
+
+/** Whether a band is the top ("Elite") tier. Keeps the label string confined to
+ * this module so callers test the tier, not a display word. */
+export function isTopBand(band: SensitivityBand | null): boolean {
+	return band?.label === "Elite";
 }

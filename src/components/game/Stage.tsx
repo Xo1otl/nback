@@ -46,15 +46,16 @@ export function Stage({
 	audioEnabled: boolean;
 	speakPulse: number;
 }) {
-	const { status, phase, scored, stimulus, trial } = snapshot;
-	const live = status === "running" && stimulus !== undefined;
+	const { status, phase, scored, stimulus } = snapshot;
+	const liveStim = status === "running" ? stimulus : undefined;
 	const dim = phase === "feedback";
 	const memorize = status === "running" && phase === "responding" && !scored;
 
-	const active = live ? parsePosition(stimulus && game.trialStimulusValue(stimulus, game.MOD_POSITION)) : null;
-
-	const cellContent = live && stimulus ? (
-		<StimulusContent stimulus={stimulus} dim={dim} />
+	const active = liveStim
+		? parsePosition(game.trialStimulusValue(liveStim, game.MOD_POSITION))
+		: null;
+	const cellContent = liveStim ? (
+		<StimulusContent stimulus={liveStim} dim={dim} />
 	) : null;
 
 	return (

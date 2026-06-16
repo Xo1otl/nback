@@ -9,10 +9,7 @@ import { useEffect, useRef, useState } from "react";
 
 import type * as driver from "@/driver";
 import * as game from "@/game";
-import { playStimulus, stopAudio, warmUpAudio } from "@/lib/stimulusAudio";
-
-// Re-exported so the game screen can prime audio from the same start gesture.
-export { warmUpAudio };
+import { playStimulus, stopAudio } from "@/lib/stimulusAudio";
 
 /** @returns the trial index whose audio was last played (or -1). */
 export function useStimulusAudio(

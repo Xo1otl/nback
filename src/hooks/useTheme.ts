@@ -41,9 +41,7 @@ function subscribe(listener: () => void): () => void {
 // change detection: it folds in the resolved theme so an OS flip in "system"
 // mode — which leaves `mode` unchanged — still re-renders subscribers.
 function getSnapshot(): string {
-	return mode === "system"
-		? `system:${theme.systemPrefersDark() ? "dark" : "light"}`
-		: mode;
+	return mode === "system" ? `system:${theme.resolveTheme(mode)}` : mode;
 }
 
 /** Set the theme preference: persist, apply to the DOM, and notify React. */

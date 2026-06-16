@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Check, Minus, Plus } from "lucide-react";
+import { Check, Minus, Plus } from "lucide-react";
 
 import * as game from "@/game";
 import { Button } from "@/components/ui/button";
@@ -13,13 +13,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shell } from "@/components/Shell";
-import { OptionPicker, ShapePicker } from "@/components/config/OptionPicker";
+import { ScreenHeader } from "@/components/ScreenHeader";
+import {
+	MIN_OPTIONS,
+	OptionPicker,
+	ShapePicker,
+} from "@/components/config/OptionPicker";
 import { ALL_MODS, modMeta } from "@/lib/modalities";
 import {
 	DEFAULT_POSITION_SHAPE,
 	matchPositionShape,
 	POSITION_SHAPES,
 } from "@/lib/positionShapes";
+import { matchPctOf, matchProbabilityFromPct } from "@/lib/sessionConfig";
 import { cn } from "@/lib/utils";
 
 /** A labeled integer stepper with −/+ and a number input. */
@@ -122,7 +128,7 @@ function initialModOptions(
 	const out: Record<game.ModID, ReadonlySet<game.Option>> = {};
 	for (const id of ALL_MODS) {
 		if (id === game.MOD_POSITION) continue;
-		const fromInitial = initial.mods.find((m) => m.mod === id)?.options;
+		const fromInitial = game.specMod(initial, id)?.options;
 		const canonical = game.CANONICAL_OPTIONS[id] ?? [];
 		out[id] = new Set(fromInitial?.length ? fromInitial : canonical);
 	}
@@ -130,7 +136,7 @@ function initialModOptions(
 }
 
 function initialShapeId(initial: game.SessionConfig): string {
-	const pos = initial.mods.find((m) => m.mod === game.MOD_POSITION);
+	const pos = game.specMod(initial, game.MOD_POSITION);
 	return (
 		(pos && matchPositionShape(pos.options))?.id ?? DEFAULT_POSITION_SHAPE.id
 	);
@@ -150,9 +156,7 @@ export function ConfigScreen({
 }) {
 	const [n, setN] = useState(initial.n);
 	const [problemCount, setProblemCount] = useState(initial.problemCount);
-	const [matchPct, setMatchPct] = useState(
-		Math.round(initial.matchProbability * 100),
-	);
+	const [matchPct, setMatchPct] = useState(matchPctOf(initial));
 	const [respondingMs, setRespondingMs] = useState(
 		initial.timing.respondingDuration,
 	);
@@ -182,7 +186,7 @@ export function ConfigScreen({
 		setModOptions((prev) => {
 			const cur = new Set(prev[mod] ?? []);
 			if (cur.has(value)) {
-				if (cur.size <= 2) return prev; // keep |O_m| >= 2
+				if (cur.size <= MIN_OPTIONS) return prev; // keep |O_m| >= 2
 				cur.delete(value);
 			} else {
 				cur.add(value);
@@ -210,12 +214,12 @@ export function ConfigScreen({
 		return {
 			n,
 			problemCount,
-			matchProbability: matchPct / 100,
+			matchProbability: matchProbabilityFromPct(matchPct),
 			timing: {
 				respondingDuration: respondingMs,
 				feedbackDuration: feedbackMs,
 			},
-			mods: ALL_MODS.filter((id) => selected.has(id)).map((id) => ({
+			mods: enabledMods.map((id) => ({
 				mod: id,
 				options: optionsFor(id),
 			})),
@@ -228,17 +232,7 @@ export function ConfigScreen({
 	return (
 		<Shell>
 			<div className="flex w-full max-w-lg flex-col gap-5">
-				<div className="flex items-center gap-2">
-					<Button
-						variant="ghost"
-						size="icon"
-						aria-label="Back"
-						onClick={() => onBack(buildConfig())}
-					>
-						<ArrowLeft />
-					</Button>
-					<h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-				</div>
+				<ScreenHeader title="Settings" onBack={() => onBack(buildConfig())} />
 
 				<Card>
 					<CardHeader>

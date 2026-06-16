@@ -11,7 +11,7 @@
 import { Volume2 } from "lucide-react";
 
 import * as game from "@/game";
-import { ShapeBody } from "@/components/game/CompositeStimulus";
+import { ShapeBody } from "@/components/ShapeBody";
 import { optionLabel } from "@/lib/modalities";
 import { fillFor, gridDims, shapeKind } from "@/lib/modalityTheme";
 import type { PositionShape } from "@/lib/positionShapes";

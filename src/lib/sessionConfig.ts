@@ -12,6 +12,17 @@ export const DEFAULT_MODS: readonly game.ModID[] = [
 	game.MOD_CHARACTER,
 ];
 
+/** A config's match rate as a whole percent — the unit the config UI and the
+ * History filter share. Inverse of {@link matchProbabilityFromPct}. */
+export function matchPctOf(config: game.SessionConfig): number {
+	return Math.round(config.matchProbability * 100);
+}
+
+/** A whole-percent match rate as the [0, 1] probability the domain expects. */
+export function matchProbabilityFromPct(pct: number): number {
+	return pct / 100;
+}
+
 /** A sensible, immediately-playable default session. */
 export function defaultSessionConfig(): game.SessionConfig {
 	const base = game.defaultMultiplexConfig(2, 20, 0.3, {

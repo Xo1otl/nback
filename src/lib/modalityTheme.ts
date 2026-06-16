@@ -29,10 +29,10 @@ export const STIM_COLORS: Record<string, string> = {
 const GLYPH_DARK = "oklch(0.16 0 0)";
 const GLYPH_LIGHT = "oklch(0.98 0 0)";
 
-/** Fill for a stimulus given its color value; muted when color is disabled. */
+/** Fill for a stimulus given its color value; muted when color is disabled or
+ * unknown. */
 export function fillFor(color: string | undefined): string {
-	if (color === undefined) return "var(--color-muted-foreground)";
-	return STIM_COLORS[color] ?? "var(--color-muted-foreground)";
+	return STIM_COLORS[color ?? ""] ?? "var(--color-muted-foreground)";
 }
 
 /** Auto-contrast glyph color for the character drawn over a given fill. */

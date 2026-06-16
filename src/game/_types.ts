@@ -243,9 +243,16 @@ export function responseFor(state: SessionState, id: ModID): ResponseAction {
 	return state.responses.find((r) => r.mod === id)?.action ?? ACTION_DISENGAGE;
 }
 
+/** Whether `id` is engaged given a current-trial response fold — the shape both
+ * `SessionState` and the driver's `SessionSnapshot` expose, so a UI reading the
+ * snapshot shares one definition with the state machine. */
+export function engagedIn(responses: readonly ModResponse[], id: ModID): boolean {
+	return responses.find((r) => r.mod === id)?.action === ACTION_ENGAGE;
+}
+
 /** Whether a modality is currently engaged in the current trial. */
 export function isEngaged(state: SessionState, id: ModID): boolean {
-	return responseFor(state, id) === ACTION_ENGAGE;
+	return engagedIn(state.responses, id);
 }
 
 // ---- Scoring vocabulary (§Scoring) ----

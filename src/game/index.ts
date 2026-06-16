@@ -66,6 +66,7 @@ export {
 	sameStimulus,
 	responseFor,
 	isEngaged,
+	engagedIn,
 	matchAt,
 	finalEngagedFrom,
 	// scoring vocabulary (shared by driver feedback + analysis projection)

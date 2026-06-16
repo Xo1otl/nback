@@ -1,62 +1,27 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
+import type * as game from "@/game";
 import * as analysis from "@/analysis";
-import * as game from "@/game";
 import * as storage from "@/storage";
+import * as hf from "@/lib/historyFilter";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Shell } from "@/components/Shell";
+import { ScreenHeader } from "@/components/ScreenHeader";
+import { DeltaChip } from "@/components/history/DeltaChip";
+import { DPrimeTrend } from "@/components/history/TrendChart";
+import { FilterBar } from "@/components/history/FilterBar";
+import { SessionRow } from "@/components/history/SessionRow";
+import type { ScoredSession } from "@/components/history/types";
 import { fmtDPrime, meanDPrime } from "@/lib/score";
 
-type Row = {
-	stored: storage.StoredSession;
-	dp: number | null;
-};
+const NO_MATCH = "No sessions match these filters.";
 
-/** A tiny inline sensitivity (d′) trend line over chronological sessions. */
-function Sparkline({ values }: { values: number[] }) {
-	const finite = values.filter((v) => Number.isFinite(v));
-	if (finite.length < 2) return null;
-	const w = 100;
-	const h = 28;
-	const lo = Math.min(...finite);
-	const hi = Math.max(...finite);
-	const span = hi - lo || 1;
-	const pts = values
-		.map((v, i) => {
-			const x = (i / (values.length - 1)) * w;
-			const y = h - ((v - lo) / span) * h;
-			return `${x.toFixed(1)},${y.toFixed(1)}`;
-		})
-		.join(" ");
-	return (
-		<svg
-			viewBox={`0 0 ${w} ${h}`}
-			preserveAspectRatio="none"
-			className="h-8 w-full"
-			aria-hidden
-		>
-			<polyline
-				points={pts}
-				fill="none"
-				stroke="var(--color-primary)"
-				strokeWidth={1.5}
-				strokeLinejoin="round"
-				strokeLinecap="round"
-				vectorEffect="non-scaling-stroke"
-			/>
-		</svg>
-	);
-}
-
-/** Screen 5 — past sessions + d′ trend. Minimal. */
+/** Screen 5 — past sessions as one filterable d′ trend + a flat list. The
+ * composable filter (`lib/historyFilter`) lets the user choose exactly which
+ * matching conditions to compare, including option-pool size. Thin wiring over
+ * the `components/history/*` pieces. */
 export function HistoryScreen({
 	onBack,
 	onSelect,
@@ -65,7 +30,7 @@ export function HistoryScreen({
 	onSelect: (record: game.SessionRecord) => void;
 }) {
 	const [reload, setReload] = useState(0);
-	const rows = useMemo<Row[]>(() => {
+	const all = useMemo<ScoredSession[]>(() => {
 		void reload;
 		return storage.loadSessions().map((stored) => ({
 			stored,
@@ -73,37 +38,56 @@ export function HistoryScreen({
 		}));
 	}, [reload]);
 
-	const trend = rows.map((r) => r.dp ?? Number.NaN);
+	// Open on the most-recent session's exact stimulus config, so the graph
+	// starts on a comparable trend; the user peels conditions off to broaden.
+	const [filter, setFilter] = useState<hf.SessionFilter>(() => {
+		const latest = storage.loadSessions().at(-1)?.record.spec;
+		return latest ? hf.defaultFilter(latest) : {};
+	});
+
+	const available = useMemo(
+		() => hf.availableConditions(all.map((p) => p.stored.record.spec)),
+		[all],
+	);
+
+	// Oldest-first (chronological) for the trend; newest-first for the list.
+	const matching = all.filter((p) => hf.matchesFilter(p.stored.record.spec, filter));
+	const finite = matching
+		.map((p) => p.dp)
+		.filter((d): d is number => d != null && Number.isFinite(d));
+	// One definition of "latest": the most recent FINITE d′ — shared by the
+	// headline number, the delta, and the emphasized trend dot, so they agree.
+	const latestDp = finite.length ? finite[finite.length - 1]! : null;
+	const deltaDp =
+		finite.length >= 2
+			? finite[finite.length - 1]! - finite[finite.length - 2]!
+			: null;
 
 	return (
 		<Shell>
-			<div className="flex w-full max-w-lg flex-col gap-5">
-				<div className="flex items-center gap-2">
-					<Button
-						variant="ghost"
-						size="icon"
-						aria-label="Back"
-						onClick={onBack}
-					>
-						<ArrowLeft />
-					</Button>
-					<h1 className="text-2xl font-semibold tracking-tight">History</h1>
-					{rows.length > 0 && (
-						<Button
-							variant="ghost"
-							size="sm"
-							className="ml-auto text-muted-foreground"
-							onClick={() => {
-								storage.clearSessions();
-								setReload((x) => x + 1);
-							}}
-						>
-							<Trash2 /> Clear
-						</Button>
-					)}
-				</div>
+			<div className="flex w-full max-w-lg flex-col gap-4">
+				<ScreenHeader
+					title="History"
+					onBack={onBack}
+					action={
+						all.length > 0 ? (
+							<Button
+								variant="ghost"
+								size="sm"
+								className="ml-auto text-muted-foreground"
+								onClick={() => {
+									storage.clearSessions();
+									setFilter({});
+									setReload((x) => x + 1);
+								}}
+							>
+								<Trash2 /> Clear
+							</Button>
+						) : undefined
+					}
+				/>
 
-				{rows.length === 0 ? (
+				{all.length === 0 ? (
 					<Card>
 						<CardContent className="py-10 text-center text-muted-foreground">
 							No sessions yet. Play one and it will show up here.
@@ -112,54 +96,54 @@ export function HistoryScreen({
 				) : (
 					<>
 						<Card>
-							<CardHeader>
-								<CardTitle>Sensitivity trend</CardTitle>
-								<CardDescription>
-									Mean sensitivity (d′) across {rows.length} sessions.
-								</CardDescription>
-							</CardHeader>
-							<CardContent>
-								<Sparkline values={trend} />
+							<CardContent className="flex flex-col gap-3 pt-6">
+								<div className="flex items-start justify-between gap-2">
+									<div className="text-sm font-medium">Sensitivity trend</div>
+									<div className="text-right">
+										<div className="text-lg font-semibold leading-none tabular-nums">
+											{fmtDPrime(latestDp)}
+										</div>
+										{deltaDp != null && (
+											<div className="mt-1 flex justify-end">
+												<DeltaChip delta={deltaDp} />
+											</div>
+										)}
+									</div>
+								</div>
+								{matching.length >= 2 ? (
+									<DPrimeTrend points={matching} />
+								) : (
+									<p className="text-xs text-muted-foreground">
+										{matching.length === 1
+											? "One matching session — play it again to start a trend."
+											: NO_MATCH}
+									</p>
+								)}
 							</CardContent>
 						</Card>
 
+						<FilterBar
+							filter={filter}
+							available={available}
+							onChange={setFilter}
+						/>
+
 						<div className="flex flex-col gap-2">
-							{rows
-								.map((r, i) => ({ r, i }))
-								.reverse()
-								.map(({ r, i }) => {
-									const { record, savedAt } = r.stored;
-									return (
-										<button
-											key={`${record.id}-${i}`}
-											type="button"
-											onClick={() => onSelect(record)}
-											className="flex items-center gap-3 rounded-lg border bg-card p-3 text-left transition-colors hover:bg-accent"
-										>
-											<div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 font-semibold tabular-nums text-primary">
-												{record.spec.n}
-											</div>
-											<div className="min-w-0 flex-1">
-												<div className="truncate text-sm font-medium">
-													{record.spec.n}-back ·{" "}
-													{record.spec.mods.length} mods
-												</div>
-												<div className="truncate text-xs text-muted-foreground">
-													{new Date(savedAt).toLocaleString()}
-												</div>
-											</div>
-											<div className="text-right">
-												<div className="text-xs text-muted-foreground">
-													Sensitivity
-												</div>
-												<div className="font-semibold tabular-nums">
-													{fmtDPrime(r.dp)}
-												</div>
-											</div>
-											<ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-										</button>
-									);
-								})}
+							{matching.length === 0 ? (
+								<p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+									{NO_MATCH}
+								</p>
+							) : (
+								[...matching]
+									.reverse()
+									.map((p) => (
+										<SessionRow
+											key={p.stored.record.id}
+											scored={p}
+											onSelect={onSelect}
+										/>
+									))
+							)}
 						</div>
 					</>
 				)}

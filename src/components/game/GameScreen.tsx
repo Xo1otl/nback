@@ -35,9 +35,10 @@ import { Stage, type Grid } from "@/components/game/Stage";
 import { TideBar } from "@/components/game/TideBar";
 import { useDriverSnapshot, useGameSession } from "@/hooks/useSession";
 import { useGameKeyboard } from "@/hooks/useGameKeyboard";
-import { useStimulusAudio, warmUpAudio } from "@/hooks/useStimulusAudio";
+import { useStimulusAudio } from "@/hooks/useStimulusAudio";
 import { ALL_MODS, modMeta } from "@/lib/modalities";
 import { gridDims, outcomeSkin } from "@/lib/modalityTheme";
+import { warmUpAudio } from "@/lib/stimulusAudio";
 
 export type GameScreenProps = {
 	config: game.SessionConfig;
@@ -88,7 +89,7 @@ function GameView({
 	onHome,
 }: GameScreenProps & { driver: driver.SessionDriver }) {
 	const snapshot = useDriverSnapshot(sessionDriver);
-	const audioEnabled = config.mods.some((m) => m.mod === game.MOD_AUDIO);
+	const audioEnabled = game.specMod(config, game.MOD_AUDIO) != null;
 	const speakPulse = useStimulusAudio(snapshot, audioEnabled);
 	const [confirmQuit, setConfirmQuit] = useState(false);
 
@@ -97,13 +98,13 @@ function GameView({
 		[config],
 	);
 	const grid = useMemo<Grid>(() => {
-		const pos = config.mods.find((m) => m.mod === game.MOD_POSITION);
+		const pos = game.specMod(config, game.MOD_POSITION);
 		if (!pos) return { rows: 1, cols: 1, enabled: false };
 		return { ...gridDims(pos.options), enabled: true };
 	}, [config]);
 
 	const n = config.n;
-	const total = config.n + config.problemCount;
+	const total = snapshot.totalTrials;
 	const { status, phase, scored } = snapshot;
 	const responding = status === "running" && phase === "responding";
 	const interactive = responding && scored;
@@ -111,9 +112,7 @@ function GameView({
 
 	function toggle(mod: game.ModID) {
 		if (!interactive) return;
-		const engaged =
-			snapshot.responses.find((r) => r.mod === mod)?.action ===
-			game.ACTION_ENGAGE;
+		const engaged = game.engagedIn(snapshot.responses, mod);
 		if (engaged) sessionDriver.disengage(mod);
 		else sessionDriver.engage(mod);
 	}
@@ -185,7 +184,7 @@ function GameView({
 		<div
 			role="region"
 			aria-label={`${n}-back session`}
-			className="relative flex h-[100dvh] w-full flex-col overflow-hidden"
+			className="relative flex h-[100dvh] w-full flex-col overflow-hidden [--game-chrome:15rem]"
 		>
 			<div
 				className="sr-only"
@@ -196,7 +195,7 @@ function GameView({
 				{announce}
 			</div>
 
-			<header className="flex h-14 items-center border-b bg-card/40 px-4">
+			<header className="flex h-14 shrink-0 items-center border-b bg-card/40 px-4">
 				<GameHud
 					snapshot={snapshot}
 					n={n}
@@ -206,8 +205,8 @@ function GameView({
 				/>
 			</header>
 
-			<main className="relative flex flex-1 flex-col items-center justify-center gap-3 px-4 py-4">
-				<div className="flex w-[min(80vmin,560px)] max-w-full flex-col gap-2">
+			<main className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-hidden px-4 py-4">
+				<div className="flex w-[min(80vmin,560px,calc(100dvh_-_var(--game-chrome)))] max-w-full flex-col gap-2">
 					<Stage
 						snapshot={snapshot}
 						grid={grid}
@@ -245,7 +244,7 @@ function GameView({
 				)}
 			</main>
 
-			<footer className="border-t bg-card/40 px-4 py-3">
+			<footer className="shrink-0 border-t bg-card/40 px-4 py-3">
 				<ResponseRail
 					mods={enabledMods}
 					snapshot={snapshot}

@@ -3,7 +3,6 @@ import { Home, History, RotateCcw } from "lucide-react";
 
 import * as analysis from "@/analysis";
 import * as game from "@/game";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -16,6 +15,7 @@ import { Shell } from "@/components/Shell";
 import { modMeta } from "@/lib/modalities";
 import {
 	fmtDPrime,
+	isTopBand,
 	meanDPrime,
 	overallAccuracy,
 	sensitivityBand,
@@ -41,7 +41,7 @@ export function AnalysisScreen({
 	// A flawless run (100% accuracy) still caps below "Elite" on a short session:
 	// the log-linear d′ ceiling rises with the number of *scored trials* (not N or
 	// match rate). Rather than fake the top band, nudge toward a longer session.
-	const cappedFlawless = acc === 1 && band?.label !== "Elite";
+	const cappedFlawless = acc === 1 && !isTopBand(band);
 
 	return (
 		<Shell>
@@ -186,7 +186,7 @@ export function AnalysisScreen({
 
 				<div className="flex flex-wrap gap-3">
 					<Button className="flex-1" onClick={onPlayAgain}>
-						<RotateCcw /> Play again
+						<RotateCcw /> Play again (same settings)
 					</Button>
 					<Button variant="outline" onClick={onHistory}>
 						<History /> History

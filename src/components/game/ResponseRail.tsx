@@ -5,7 +5,7 @@
  */
 
 import type * as driver from "@/driver";
-import type * as game from "@/game";
+import * as game from "@/game";
 import { ResponsePad } from "@/components/game/ResponsePad";
 import { KEY_FOR_MOD } from "@/lib/modalityTheme";
 
@@ -20,15 +20,22 @@ export function ResponseRail({
 	locked: boolean;
 	onToggle: (mod: game.ModID) => void;
 }) {
+	// A centered, wrapping row of channel pads: exactly 3 per row on phones (a
+	// balanced 3×2 for six channels), a single centered row on larger screens.
+	// `justify-center` centers partial rows (e.g. 3 enabled mods on desktop);
+	// `max-w-2xl` + the per-pad width cap keep the row within the viewport.
 	return (
-		<div className="mx-auto grid w-full max-w-2xl grid-cols-[repeat(auto-fit,minmax(4.5rem,1fr))] gap-2">
+		<div className="mx-auto flex w-full max-w-2xl flex-wrap justify-center gap-2">
 			{mods.map((mod) => {
-				const engaged =
-					snapshot.responses.find((r) => r.mod === mod)?.action === "engage";
+				const engaged = game.engagedIn(snapshot.responses, mod);
 				const outcome = snapshot.feedback?.find((f) => f.mod === mod)?.outcome;
 				return (
 					<ResponsePad
 						key={mod}
+						// 3 per row on phones (fills the row, so 6 → 3×2); on ≥sm each
+						// pad grows to fill but caps at 7rem, so fewer than 6 stay a
+						// centered cluster instead of stretching.
+						className="shrink-0 grow-0 basis-[calc((100%_-_1rem)/3)] sm:max-w-[7rem] sm:shrink sm:grow sm:basis-0"
 						mod={mod}
 						keyHint={KEY_FOR_MOD[mod] ?? "?"}
 						engaged={engaged}

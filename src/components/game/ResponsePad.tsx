@@ -17,6 +17,7 @@ export function ResponsePad({
 	locked,
 	outcome,
 	onToggle,
+	className,
 }: {
 	mod: game.ModID;
 	keyHint: string;
@@ -26,6 +27,8 @@ export function ResponsePad({
 	/** Present only during feedback on a scored trial. */
 	outcome: game.Outcome | undefined;
 	onToggle: () => void;
+	/** Layout classes supplied by the rail (flex sizing). */
+	className?: string;
 }) {
 	const meta = modMeta(mod);
 	const skin = outcome !== undefined ? outcomeSkin(outcome) : null;
@@ -46,7 +49,7 @@ export function ResponsePad({
 			}
 			onClick={onToggle}
 			className={cn(
-				"relative flex min-h-16 flex-1 flex-col items-center justify-center gap-1 rounded-lg border p-2 text-center transition-colors",
+				"relative flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-lg border p-2 text-center transition-colors",
 				skin
 					? skin.className
 					: engaged
@@ -54,6 +57,7 @@ export function ResponsePad({
 						: "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
 				locked && "pointer-events-none",
 				locked && !skin && "opacity-40",
+				className,
 			)}
 		>
 			<span className="absolute left-1.5 top-1.5 hidden rounded border border-border/60 bg-muted px-1 font-mono text-[10px] leading-tight text-muted-foreground sm:block">

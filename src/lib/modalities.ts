@@ -90,3 +90,23 @@ export const ALL_MODS: readonly game.ModID[] = [
 	game.MOD_AUDIO,
 	game.MOD_ANIMATION,
 ];
+
+/**
+ * `ids` in canonical (`ALL_MODS`) order — the single home for canonical modality
+ * ordering. Order-independent and total: unknown ids (not in `ALL_MODS`) sort
+ * last, tie-broken lexically, so the same set always orders identically.
+ */
+export function modsInOrder(ids: readonly game.ModID[]): game.ModID[] {
+	const rank = (m: game.ModID): number => {
+		const i = ALL_MODS.indexOf(m);
+		return i >= 0 ? i : ALL_MODS.length;
+	};
+	return [...ids].sort(
+		(a, b) => rank(a) - rank(b) || (a < b ? -1 : a > b ? 1 : 0),
+	);
+}
+
+/** A spec's active modality ids in canonical order. */
+export function sortedModIds(spec: game.SessionSpec): game.ModID[] {
+	return modsInOrder(spec.mods.map((m) => m.mod));
+}
