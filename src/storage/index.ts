@@ -9,4 +9,6 @@ export {
 	loadSessions,
 	saveSession,
 	clearSessions,
+	loadHistoryQuery,
+	saveHistoryQuery,
 } from "./_store";

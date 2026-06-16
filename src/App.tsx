@@ -12,6 +12,7 @@ import { HistoryScreen } from "@/components/HistoryScreen";
 import { TopScreen } from "@/components/TopScreen";
 import { newSessionId, randomSeed } from "@/lib/ids";
 import { defaultSessionConfig } from "@/lib/sessionConfig";
+import * as analysis from "@/analysis";
 
 /**
  * Screen state machine. No router by design — the five n-back screens form a
@@ -37,10 +38,26 @@ function initialConfig(): game.SessionConfig {
 	return storage.loadSessions().at(-1)?.record.spec ?? defaultSessionConfig();
 }
 
+/** The persisted History query, else the latest session's default query (so on
+ * a fresh install History opens on a comparable trend), else "" (all). */
+function initialHistoryQuery(): string {
+	const persisted = storage.loadHistoryQuery();
+	if (persisted !== null) return persisted;
+	const latest = storage.loadSessions().at(-1)?.record.spec;
+	return latest ? analysis.defaultQuery(latest) : "";
+}
+
 export function App() {
 	const [screen, setScreen] = useState<Screen>({ k: "top" });
 	// The current/last config: instant Play and the config form both start here.
 	const [config, setConfig] = useState<game.SessionConfig>(initialConfig);
+	// History search query — lifted here (like `config`) so it survives leaving
+	// and reopening the screen, and persisted so it survives a reload too.
+	const [historyQuery, setHistoryQuery] = useState<string>(initialHistoryQuery);
+	function changeHistoryQuery(next: string) {
+		setHistoryQuery(next);
+		storage.saveHistoryQuery(next);
+	}
 
 	// Apply the persisted theme on mount. The inline script in index.html already
 	// did this pre-paint (no flash); this is the React-side source of truth and a
@@ -103,6 +120,8 @@ export function App() {
 				<HistoryScreen
 					onBack={() => setScreen({ k: "top" })}
 					onSelect={(record) => setScreen({ k: "analysis", record })}
+					query={historyQuery}
+					onQueryChange={changeHistoryQuery}
 				/>
 			);
 	}

@@ -44,3 +44,13 @@ export {
 	reconstructTrials,
 	projectSessionScore,
 } from "./_project";
+
+// ---- Session query (token search over a SessionSpec) ----
+export {
+	type Token,
+	type Op,
+	type ScalarField,
+	parseQuery,
+	matchesQuery,
+	defaultQuery,
+} from "./_query";

@@ -4,30 +4,34 @@ import { Trash2 } from "lucide-react";
 import type * as game from "@/game";
 import * as analysis from "@/analysis";
 import * as storage from "@/storage";
-import * as hf from "@/lib/historyFilter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Shell } from "@/components/Shell";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { DeltaChip } from "@/components/history/DeltaChip";
 import { DPrimeTrend } from "@/components/history/TrendChart";
-import { FilterBar } from "@/components/history/FilterBar";
+import { SearchBar } from "@/components/history/SearchBar";
 import { SessionRow } from "@/components/history/SessionRow";
 import type { ScoredSession } from "@/components/history/types";
 import { fmtDPrime, meanDPrime } from "@/lib/score";
 
-const NO_MATCH = "No sessions match these filters.";
+const NO_MATCH = "No sessions match this search.";
 
-/** Screen 5 — past sessions as one filterable d′ trend + a flat list. The
- * composable filter (`lib/historyFilter`) lets the user choose exactly which
- * matching conditions to compare, including option-pool size. Thin wiring over
- * the `components/history/*` pieces. */
+/** Screen 5 — past sessions as one searchable d′ trend + a flat list. A token
+ * search (`analysis.parseQuery`/`matchesQuery`) lets the user pick exactly which
+ * sessions to compare — modalities, specific options, timing, match rate. Thin
+ * wiring over the `components/history/*` pieces. */
 export function HistoryScreen({
 	onBack,
 	onSelect,
+	query,
+	onQueryChange,
 }: {
 	onBack: () => void;
 	onSelect: (record: game.SessionRecord) => void;
+	/** Lifted to `App` and persisted, so it survives leaving/reopening + reload. */
+	query: string;
+	onQueryChange: (query: string) => void;
 }) {
 	const [reload, setReload] = useState(0);
 	const all = useMemo<ScoredSession[]>(() => {
@@ -38,20 +42,11 @@ export function HistoryScreen({
 		}));
 	}, [reload]);
 
-	// Open on the most-recent session's exact stimulus config, so the graph
-	// starts on a comparable trend; the user peels conditions off to broaden.
-	const [filter, setFilter] = useState<hf.SessionFilter>(() => {
-		const latest = storage.loadSessions().at(-1)?.record.spec;
-		return latest ? hf.defaultFilter(latest) : {};
-	});
-
-	const available = useMemo(
-		() => hf.availableConditions(all.map((p) => p.stored.record.spec)),
-		[all],
-	);
-
+	const tokens = useMemo(() => analysis.parseQuery(query), [query]);
 	// Oldest-first (chronological) for the trend; newest-first for the list.
-	const matching = all.filter((p) => hf.matchesFilter(p.stored.record.spec, filter));
+	const matching = all.filter((p) =>
+		analysis.matchesQuery(p.stored.record.spec, tokens),
+	);
 	const finite = matching
 		.map((p) => p.dp)
 		.filter((d): d is number => d != null && Number.isFinite(d));
@@ -77,7 +72,7 @@ export function HistoryScreen({
 								className="ml-auto text-muted-foreground"
 								onClick={() => {
 									storage.clearSessions();
-									setFilter({});
+									onQueryChange("");
 									setReload((x) => x + 1);
 								}}
 							>
@@ -95,6 +90,14 @@ export function HistoryScreen({
 					</Card>
 				) : (
 					<>
+						<SearchBar
+							query={query}
+							tokens={tokens}
+							matchCount={matching.length}
+							total={all.length}
+							onChange={onQueryChange}
+						/>
+
 						<Card>
 							<CardContent className="flex flex-col gap-3 pt-6">
 								<div className="flex items-start justify-between gap-2">
@@ -121,12 +124,6 @@ export function HistoryScreen({
 								)}
 							</CardContent>
 						</Card>
-
-						<FilterBar
-							filter={filter}
-							available={available}
-							onChange={setFilter}
-						/>
 
 						<div className="flex flex-col gap-2">
 							{matching.length === 0 ? (

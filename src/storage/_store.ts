@@ -12,6 +12,7 @@
 import type * as game from "@/game";
 
 const KEY = "nback.sessions.v1";
+const QUERY_KEY = "nback.historyQuery.v1";
 
 /** A persisted play-through: the record plus when it was saved (epoch ms). */
 export type StoredSession = {
@@ -78,6 +79,23 @@ export function clearSessions(): void {
 	if (typeof localStorage === "undefined") return;
 	try {
 		localStorage.removeItem(KEY);
+	} catch {
+		// ignore
+	}
+}
+
+/** The persisted History search query, or `null` if unset / unavailable. */
+export function loadHistoryQuery(): string | null {
+	if (typeof localStorage === "undefined") return null;
+	const raw = localStorage.getItem(QUERY_KEY);
+	return typeof raw === "string" ? raw : null;
+}
+
+/** Persist the History search query (best-effort; errors degrade to a no-op). */
+export function saveHistoryQuery(query: string): void {
+	if (typeof localStorage === "undefined") return;
+	try {
+		localStorage.setItem(QUERY_KEY, query);
 	} catch {
 		// ignore
 	}
