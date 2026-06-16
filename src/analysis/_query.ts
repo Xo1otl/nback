@@ -32,7 +32,7 @@ const KEY_FOR_MOD: Record<string, string> = Object.fromEntries(
 	Object.entries(MOD_KEYS).map(([k, mod]) => [mod, k]),
 );
 
-export type ScalarField = "n" | "time" | "fb" | "match";
+type ScalarField = "n" | "time" | "fb" | "match";
 const SCALAR_FIELDS: Record<string, ScalarField> = {
 	n: "n",
 	time: "time",
@@ -40,7 +40,7 @@ const SCALAR_FIELDS: Record<string, ScalarField> = {
 	match: "match",
 };
 
-export type Op = "=" | ">" | ">=" | "<" | "<=";
+type Op = "=" | ">" | ">=" | "<" | "<=";
 
 export type Token =
 	| { readonly kind: "mod"; readonly raw: string; readonly mod: game.ModID; readonly values: readonly string[] | null }

@@ -95,8 +95,8 @@ export const ALL_MODS: readonly game.ModID[] = [
  * `ids` in canonical (`ALL_MODS`) order — the single home for canonical modality
  * ordering. Order-independent and total: unknown ids (not in `ALL_MODS`) sort
  * last, tie-broken lexically, so the same set always orders identically.
- */
-export function modsInOrder(ids: readonly game.ModID[]): game.ModID[] {
+ * Internal — `sortedModIds` is the exported entry point. */
+function modsInOrder(ids: readonly game.ModID[]): game.ModID[] {
 	const rank = (m: game.ModID): number => {
 		const i = ALL_MODS.indexOf(m);
 		return i >= 0 ? i : ALL_MODS.length;
