@@ -11,6 +11,7 @@ import { ScreenHeader } from "@/components/ScreenHeader";
 import { DeltaChip } from "@/components/history/DeltaChip";
 import { DPrimeTrend } from "@/components/history/TrendChart";
 import { SearchBar } from "@/components/history/SearchBar";
+import { PeriodFilter, withinPeriod, type PeriodKey } from "@/components/history/PeriodFilter";
 import { SessionRow } from "@/components/history/SessionRow";
 import type { ScoredSession } from "@/components/history/types";
 import { fmtDPrime, meanDPrime } from "@/lib/score";
@@ -31,6 +32,8 @@ export function HistoryScreen({
 	onQueryChange: (query: string) => void;
 }) {
 	const [reload, setReload] = useState(0);
+	const [period, setPeriod] = useState<PeriodKey>("all");
+	const [now] = useState(() => Date.now());
 	const all = useMemo<ScoredSession[]>(() => {
 		void reload;
 		return storage.loadSessions().map((record) => ({
@@ -41,8 +44,11 @@ export function HistoryScreen({
 
 	const tokens = useMemo(() => analysis.parseQuery(query), [query]);
 	// Oldest-first (chronological) for the trend; newest-first for the list.
-	const matching = all.filter((p) =>
-		analysis.matchesQuery(p.record.spec, tokens),
+	// Protocol filter (domain) then time window (UI); both narrow the whole view.
+	const matching = all.filter(
+		(p) =>
+			analysis.matchesQuery(p.record.spec, tokens) &&
+			withinPeriod(p.record.createdAt, period, now),
 	);
 	const finite = matching
 		.map((p) => p.dp)
@@ -93,6 +99,7 @@ export function HistoryScreen({
 							total={all.length}
 							onChange={onQueryChange}
 						/>
+						<PeriodFilter value={period} onChange={setPeriod} />
 
 						<Card>
 							<CardContent className="flex flex-col gap-3 pt-6">
