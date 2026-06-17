@@ -1,12 +1,11 @@
 /**
  * Local persistence for completed sessions. A `game.SessionRecord` is the SSOT
- * for a play-through (plain immutable values), so it serializes losslessly to
- * JSON; the `analysis` package projects scores from it on demand — storage
- * stays dumb and keeps only the record plus a save timestamp.
+ * for a play-through (plain immutable values, incl. its `createdAt` wall-clock
+ * stamp), so it serializes losslessly to JSON; the `analysis` package projects
+ * scores from it on demand — storage stays dumb and keeps only the records.
  *
- * Backed by `localStorage`. All access is defensive: missing/!window,
- * malformed JSON, and quota errors degrade to a no-op rather than throwing into
- * the UI.
+ * Backed by `localStorage`. All access is defensive: missing/!window, malformed
+ * JSON, and quota errors degrade to a no-op rather than throwing into the UI.
  */
 
 import type * as game from "@/game";
@@ -14,64 +13,39 @@ import type * as game from "@/game";
 const KEY = "nback.sessions.v1";
 const QUERY_KEY = "nback.historyQuery.v1";
 
-/** A persisted play-through: the record plus when it was saved (epoch ms). */
-export type StoredSession = {
-	readonly record: game.SessionRecord;
-	readonly savedAt: number;
-};
-
-/** Shallow shape check: enough that consumers can safely read `.record.spec`
- * and `.savedAt`. A corrupt/hand-edited/stale entry is dropped rather than
- * crashing the History screen — honors this module's "degrade to a no-op". */
-function isStoredSession(e: unknown): e is StoredSession {
-	if (typeof e !== "object" || e === null) return false;
-	const { record, savedAt } = e as { record?: unknown; savedAt?: unknown };
-	return (
-		typeof savedAt === "number" &&
-		typeof record === "object" &&
-		record !== null &&
-		"spec" in record
-	);
-}
-
-function readRaw(): StoredSession[] {
+function readRaw(): game.SessionRecord[] {
 	if (typeof localStorage === "undefined") return [];
 	const raw = localStorage.getItem(KEY);
 	if (!raw) return [];
 	try {
 		const parsed: unknown = JSON.parse(raw);
-		return Array.isArray(parsed) ? parsed.filter(isStoredSession) : [];
+		// We own every write, so a parsed array is trusted as-is — no per-record
+		// shape check (there's no legacy data shape to defend against yet).
+		return Array.isArray(parsed) ? (parsed as game.SessionRecord[]) : [];
 	} catch {
 		return [];
 	}
 }
 
-function writeRaw(sessions: readonly StoredSession[]): void {
+function writeRaw(records: readonly game.SessionRecord[]): void {
 	if (typeof localStorage === "undefined") return;
 	try {
-		localStorage.setItem(KEY, JSON.stringify(sessions));
+		localStorage.setItem(KEY, JSON.stringify(records));
 	} catch {
 		// Quota exceeded or storage disabled — drop silently; persistence is a
 		// best-effort convenience, never a correctness dependency for play.
 	}
 }
 
-/** All saved sessions in chronological order (oldest first), for trend lines. */
-export function loadSessions(): StoredSession[] {
+/** All saved records in save order (oldest first), for trend lines. */
+export function loadSessions(): game.SessionRecord[] {
 	return readRaw();
 }
 
-/**
- * Append a completed record and return its stored entry. `savedAt` is supplied
- * by the caller (the clock lives at the UI edge, not in this module).
- */
-export function saveSession(
-	record: game.SessionRecord,
-	savedAt: number,
-): StoredSession {
-	const entry: StoredSession = { record, savedAt };
-	writeRaw([...readRaw(), entry]);
-	return entry;
+/** Append a completed record. The play time lives on the record (`createdAt`),
+ * so storage no longer stamps its own timestamp. */
+export function saveSession(record: game.SessionRecord): void {
+	writeRaw([...readRaw(), record]);
 }
 
 /** Forget every saved session. */

@@ -5,7 +5,6 @@
  */
 
 export {
-	type StoredSession,
 	loadSessions,
 	saveSession,
 	clearSessions,

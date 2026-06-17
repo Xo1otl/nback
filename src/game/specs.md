@@ -17,7 +17,9 @@ Total trials $T = N + \text{problemCount}$. Index 0.
 
 ## Timing
 
-**Origin** = v-sync @ `responding(0)` onset; sole absolute ref. Every event: **offset** = ms from Origin.
+**Origin** = monotonic clock @ `responding(0)` onset; reference for all offsets (driver-internal, not stored — immune to wall-clock jumps). Every event: **offset** = ms from Origin.
+
+**`createdAt`** = wall-clock instant (epoch ms) @ `responding(0)` onset; the record's sole stored absolute ref.
 
 `respondingOnset.offset` = 0 if `t=0`, else entering `nextTrial.offset`.
 
@@ -26,7 +28,7 @@ Derived:
 * RT = `respond.offset - respondingOnset.offset`
 * responding dur = `closeTrial.offset - respondingOnset.offset`
 * feedback dur = `nextTrial.offset - closeTrial.offset`
-* abs v-sync = `Origin + offset`
+* wall-clock @ event ≈ `createdAt + offset`
 
 ## Events (Driver)
 

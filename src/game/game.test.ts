@@ -537,10 +537,10 @@ describe("newSessionRecord", () => {
 		const s = game.validateAndResolveConfig(simpleConfig());
 		const rec = game.newSessionRecord("sess-1", s, "seed-1", [], 12345, []);
 		expect(rec.version).toBe(game.SESSION_RECORD_VERSION);
-		expect(rec.version).toBe(3);
+		expect(rec.version).toBe(4);
 		expect(rec.id).toBe("sess-1");
 		expect(rec.seed).toBe("seed-1");
-		expect(rec.origin).toBe(12345);
+		expect(rec.createdAt).toBe(12345);
 		expect(rec.spec).toBe(s);
 	});
 });

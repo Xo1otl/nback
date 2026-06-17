@@ -13,13 +13,13 @@ export function SessionRow({
 	scored: ScoredSession;
 	onSelect: (record: game.SessionRecord) => void;
 }) {
-	const spec = scored.stored.record.spec;
+	const spec = scored.record.spec;
 	const mods = sortedModIds(spec);
-	const when = new Date(scored.stored.savedAt).toLocaleString();
+	const when = new Date(scored.record.createdAt).toLocaleString();
 	return (
 		<button
 			type="button"
-			onClick={() => onSelect(scored.stored.record)}
+			onClick={() => onSelect(scored.record)}
 			aria-label={`Session ${when}, ${spec.n}-back, sensitivity ${fmtDPrime(
 				scored.dp,
 			)}`}

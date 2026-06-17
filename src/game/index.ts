@@ -11,7 +11,7 @@ export {
 	type SessionID,
 	type TrialIndex,
 	type Milliseconds,
-	type VSyncStamp,
+	type Timestamp,
 	type Probability,
 	type Option,
 	type RandomSeed,

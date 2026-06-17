@@ -36,16 +36,16 @@ export function HistoryScreen({
 	const [reload, setReload] = useState(0);
 	const all = useMemo<ScoredSession[]>(() => {
 		void reload;
-		return storage.loadSessions().map((stored) => ({
-			stored,
-			dp: meanDPrime(analysis.projectSessionScore(stored.record)),
+		return storage.loadSessions().map((record) => ({
+			record,
+			dp: meanDPrime(analysis.projectSessionScore(record)),
 		}));
 	}, [reload]);
 
 	const tokens = useMemo(() => analysis.parseQuery(query), [query]);
 	// Oldest-first (chronological) for the trend; newest-first for the list.
 	const matching = all.filter((p) =>
-		analysis.matchesQuery(p.stored.record.spec, tokens),
+		analysis.matchesQuery(p.record.spec, tokens),
 	);
 	const finite = matching
 		.map((p) => p.dp)
@@ -135,7 +135,7 @@ export function HistoryScreen({
 									.reverse()
 									.map((p) => (
 										<SessionRow
-											key={p.stored.record.id}
+											key={p.record.id}
 											scored={p}
 											onSelect={onSelect}
 										/>

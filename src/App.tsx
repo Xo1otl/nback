@@ -35,7 +35,7 @@ type Screen =
 /** The most recent saved config (a `SessionSpec` is structurally a config), or
  * the default — used to seed instant Play and pre-fill the config form. */
 function initialConfig(): game.SessionConfig {
-	return storage.loadSessions().at(-1)?.record.spec ?? defaultSessionConfig();
+	return storage.loadSessions().at(-1)?.spec ?? defaultSessionConfig();
 }
 
 /** The persisted History query, else the latest session's default query (so on
@@ -43,7 +43,7 @@ function initialConfig(): game.SessionConfig {
 function initialHistoryQuery(): string {
 	const persisted = storage.loadHistoryQuery();
 	if (persisted !== null) return persisted;
-	const latest = storage.loadSessions().at(-1)?.record.spec;
+	const latest = storage.loadSessions().at(-1)?.spec;
 	return latest ? analysis.defaultQuery(latest) : "";
 }
 
@@ -100,7 +100,7 @@ export function App() {
 					config={screen.config}
 					id={screen.id}
 					seed={screen.seed}
-					onPersist={(record) => storage.saveSession(record, Date.now())}
+					onPersist={(record) => storage.saveSession(record)}
 					onViewResults={(record) => setScreen({ k: "analysis", record })}
 					onHome={() => setScreen({ k: "top" })}
 				/>

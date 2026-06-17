@@ -33,7 +33,8 @@ export function createDriver(
 
 	let state = initial;
 	let status: SessionStatus = "idle";
-	let origin: game.VSyncStamp = 0;
+	let origin: game.Milliseconds = 0; // monotonic; private, drives event offsets
+	let createdAt: game.Timestamp = 0; // wall-clock at start; persisted on the record
 	const events: game.Event[] = [];
 
 	let cancelTimer: (() => void) | undefined;
@@ -141,6 +142,7 @@ export function createDriver(
 		start() {
 			if (status !== "idle") return;
 			origin = deps.clock.now();
+			createdAt = deps.clock.epochNow();
 			status = "running";
 			armResponding();
 			emit();
@@ -159,7 +161,7 @@ export function createDriver(
 		},
 		record() {
 			if (status === "idle") return undefined;
-			return game.newSessionRecord(id, spec, seed, stimuli, origin, events);
+			return game.newSessionRecord(id, spec, seed, stimuli, createdAt, events);
 		},
 	};
 }

@@ -15,8 +15,8 @@ export type SessionID = string;
 export type TrialIndex = number;
 /** Milliseconds from Origin (§Timing). */
 export type Milliseconds = number;
-/** Absolute v-sync timestamp; only `origin` is stored, the sole absolute ref. */
-export type VSyncStamp = number;
+/** Wall-clock instant in epoch milliseconds (e.g. when a session was played). */
+export type Timestamp = number;
 export type Probability = number;
 /** A modality option value (stable ID, compared by equality). */
 export type Option = string;
@@ -156,7 +156,7 @@ export type Event = Responded | TrialClosed | TrialAdvanced;
 
 // ---- Session record (SSOT originator, §intro) ----
 
-export const SESSION_RECORD_VERSION = 3;
+export const SESSION_RECORD_VERSION = 4;
 
 /**
  * The single source of truth for a play-through: everything needed for
@@ -169,8 +169,10 @@ export type SessionRecord = {
 	readonly spec: SessionSpec;
 	readonly seed: RandomSeed;
 	readonly stimuli: StimulusTrace;
-	/** Absolute v-sync at responding(0) onset; `absVSync = origin + offset`. */
-	readonly origin: VSyncStamp;
+	/** Wall-clock epoch ms when the play-through started (responding(0) onset);
+	 * event offsets are relative to it, so `createdAt + offset` ≈ each event's
+	 * wall-clock time. */
+	readonly createdAt: Timestamp;
 	readonly events: readonly Event[];
 };
 
@@ -179,7 +181,7 @@ export function newSessionRecord(
 	spec: SessionSpec,
 	seed: RandomSeed,
 	stimuli: StimulusTrace,
-	origin: VSyncStamp,
+	createdAt: Timestamp,
 	events: readonly Event[],
 ): SessionRecord {
 	return {
@@ -191,7 +193,7 @@ export function newSessionRecord(
 		// from any live mutable producer (e.g. the driver's growing event log,
 		// which it keeps pushing to after `record()` hands out a SessionRecord).
 		stimuli: [...stimuli],
-		origin,
+		createdAt,
 		events: [...events],
 	};
 }

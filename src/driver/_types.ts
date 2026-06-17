@@ -53,11 +53,14 @@ export type SessionSnapshot = {
 
 /**
  * Injected source of time and scheduling — the driver's only side-effect seam.
- * `now` is a monotonic clock in ms; `schedule` runs `fn` after `delayMs` and
- * returns a cancel function.
+ * `now` is a monotonic clock in ms (for durations/offsets, immune to wall-clock
+ * jumps); `epochNow` is the wall-clock instant (epoch ms) stamped once into the
+ * record's `createdAt`; `schedule` runs `fn` after `delayMs` and returns a
+ * cancel function.
  */
 export type Clock = {
 	readonly now: () => game.Milliseconds;
+	readonly epochNow: () => game.Timestamp;
 	readonly schedule: (delayMs: game.Milliseconds, fn: () => void) => () => void;
 };
 
@@ -83,7 +86,7 @@ export interface SessionDriver {
 	getSnapshot(): SessionSnapshot;
 	/** Subscribe to changes; returns an unsubscribe function. */
 	subscribe(listener: () => void): () => void;
-	/** Capture the origin, enter responding(0), and arm the phase timers. */
+	/** Stamp the start time, enter responding(0), and arm the phase timers. */
 	start(): void;
 	/** Log an engage response for `mod` at the current offset. */
 	engage(mod: game.ModID): void;

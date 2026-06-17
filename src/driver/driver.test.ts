@@ -11,6 +11,7 @@ function fakeClock() {
 
 	const clock: driver.Clock = {
 		now: () => t,
+		epochNow: () => 1_700_000_000_000,
 		schedule: (delayMs, fn) => {
 			const id = seq++;
 			timers.set(id, { at: t + delayMs, fn });

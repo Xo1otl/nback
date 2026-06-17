@@ -6,7 +6,7 @@ const TREND_HEIGHT = 96;
 
 /** A finite point on the trend: its index (so a blank session leaves a gap),
  * mean d′, and timestamp (for the tooltip). */
-type TrendPoint = { readonly i: number; readonly dp: number; readonly savedAt: number };
+type TrendPoint = { readonly i: number; readonly dp: number; readonly createdAt: number };
 
 /** Inner SVG of the d′ trend — assumes a measured width and ≥2 finite points.
  * 0-anchored y-scale with integer gridlines keeps the trajectory honest; each
@@ -94,7 +94,7 @@ function TrendChart({
 						stroke="var(--color-primary)"
 						strokeWidth={1.5}
 					>
-						<title>{`${new Date(s.savedAt).toLocaleString()} · d′ ${fmtDPrime(
+						<title>{`${new Date(s.createdAt).toLocaleString()} · d′ ${fmtDPrime(
 							s.dp,
 						)}`}</title>
 					</circle>
@@ -110,7 +110,7 @@ export function DPrimeTrend({ points }: { points: readonly ScoredSession[] }) {
 	const [ref, width] = useElementWidth<HTMLDivElement>();
 	const series: TrendPoint[] = points.flatMap((p, i) =>
 		p.dp != null && Number.isFinite(p.dp)
-			? [{ i, dp: p.dp, savedAt: p.stored.savedAt }]
+			? [{ i, dp: p.dp, createdAt: p.record.createdAt }]
 			: [],
 	);
 	return (
