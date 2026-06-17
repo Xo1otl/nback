@@ -1,9 +1,7 @@
 /**
- * Theme model: the light/dark preference, its resolution against the OS, and
- * the single DOM side effect that applies it. Pure, framework-agnostic helpers
- * (data + functions); the React binding lives in `hooks/useTheme.ts`, and a
- * tiny inline script in `index.html` mirrors `STORAGE_KEY` + the resolution to
- * apply the theme before first paint (no flash). Keep the three in sync.
+ * Theme preference + OS resolution + the one DOM write that applies it.
+ * HAZARD: keep `STORAGE_KEY` and resolution in sync with the no-flash inline
+ * script in `index.html` and the React binding in `hooks/useTheme.ts`.
  */
 
 /** A stored preference. `"system"` means "follow the OS" — the unset default. */
@@ -14,8 +12,7 @@ export type ResolvedTheme = "light" | "dark";
 /** localStorage key — mirrored by the no-flash script in `index.html`. */
 export const STORAGE_KEY = "nback.theme.v1";
 
-// Address-bar / PWA chrome color per resolved theme; matches the `--background`
-// tokens in `index.css` (light ≈ white, dark ≈ near-black).
+// Chrome color per theme; must match `--background` tokens in `index.css`.
 const THEME_COLOR: Record<ResolvedTheme, string> = {
 	light: "#ffffff",
 	dark: "#0b0b0b",
@@ -38,8 +35,7 @@ export function saveThemeMode(mode: ThemeMode): void {
 	try {
 		localStorage.setItem(STORAGE_KEY, mode);
 	} catch {
-		// Quota / disabled storage — the preference is a convenience, never a
-		// correctness dependency.
+		// quota/disabled storage; preference is convenience, not correctness
 	}
 }
 

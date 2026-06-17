@@ -14,12 +14,7 @@ import { newSessionId, randomSeed } from "@/lib/ids";
 import { defaultSessionConfig } from "@/lib/sessionConfig";
 import * as analysis from "@/analysis";
 
-/**
- * Screen state machine. No router by design — the five n-back screens form a
- * small, mostly-linear flow, so a discriminated-union `useState` is the whole
- * navigation model (a reducer would be ceremony here). Each screen renders its
- * own `Shell`.
- */
+/** Screen state machine; union makes illegal states unrepresentable. */
 type Screen =
 	| { k: "top" }
 	| { k: "config" }
@@ -59,9 +54,7 @@ export function App() {
 		storage.saveHistoryQuery(next);
 	}
 
-	// Apply the persisted theme on mount. The inline script in index.html already
-	// did this pre-paint (no flash); this is the React-side source of truth and a
-	// safety net should that script ever be stripped. Idempotent.
+	// React-side theme source of truth; index.html does the pre-paint apply. Idempotent.
 	useEffect(() => {
 		theme.applyStoredTheme();
 	}, []);
@@ -95,7 +88,7 @@ export function App() {
 		case "game":
 			return (
 				<GameScreen
-					// Fresh driver per session.
+					// fresh driver per session
 					key={screen.id}
 					config={screen.config}
 					id={screen.id}

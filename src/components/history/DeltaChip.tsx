@@ -2,10 +2,7 @@ import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-/** Trend direction vs the previous matching session. Direction is carried by
- * the icon shape, so it never relies on color alone; icon, color, and text/aria
- * all agree, including the no-change case. Tones follow the sensitivity palette's
- * -700/dark:-300 pairing (see `lib/score`). */
+/** Delta vs previous matching session. HAZARD: direction must stay on icon shape, not color alone. Tones: -700/dark:-300 (see `lib/score`). */
 export function DeltaChip({ delta }: { delta: number }) {
 	const Icon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
 	const tone =

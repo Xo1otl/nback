@@ -1,13 +1,7 @@
 /**
- * Predefined "shapes" for the position modality.
- *
- * Position options are grid-cell ids (`r{row}c{col}`). The `game` package
- * intentionally has no canonical set for them (they're grid-dependent and
- * free-form), so rather than expose arbitrary coordinates in the UI we offer a
- * curated set of recognizable arrangements. Each shape is just an `OptionList`
- * of cells on a small lattice, so it drops straight into a `ModConfig`; the
- * grid extent is derived from the ids (see `gridDims`) and the Stage lights
- * only the shape's cells, so the figure emerges as you play.
+ * Curated cell arrangements for the position modality (`game` has no canonical
+ * position set). Each is an `OptionList` of `r{row}c{col}` cells; grid extent is
+ * derived via `gridDims`.
  */
 
 import * as game from "@/game";
@@ -21,10 +15,7 @@ export type PositionShape = {
 
 const cell = (row: number, col: number): game.Option => `r${row}c${col}`;
 
-/**
- * Curated arrangements, ordered roughly hardest → easiest by cell count (more
- * cells = more positions to track). All live on a 3x3 lattice.
- */
+/** Ordered hardest→easiest by cell count. 3x3 lattice. */
 export const POSITION_SHAPES: readonly PositionShape[] = [
 	{
 		id: "grid",

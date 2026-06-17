@@ -22,10 +22,7 @@ import {
 } from "@/lib/score";
 import { cn } from "@/lib/utils";
 
-/** Copies this session's exact criteria as a History search query (see
- * `analysis.queryForSpec`), so it can be pasted into the search to find/compare
- * like sessions. The query is also the button's `title` so it stays selectable
- * if the Clipboard API is unavailable (e.g. an insecure context). */
+/** Copies the session's criteria as a History query; query is also the `title` so it stays selectable without the Clipboard API. */
 function CopyQueryButton({ query }: { query: string }) {
 	const [copied, setCopied] = useState(false);
 	return (

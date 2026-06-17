@@ -101,9 +101,7 @@ function scalarValue(spec: game.SessionSpec, field: ScalarField): number {
 		case "fb":
 			return spec.timing.feedbackDuration;
 		case "match":
-			// Whole-percent match rate (the query's unit). Same trivial formula the
-			// UI's `lib/sessionConfig.matchPctOf` uses for its own layer; not shared
-			// across the layer boundary on purpose (analysis imports no UI lib).
+			// whole-percent match rate (query's unit)
 			return Math.round(spec.matchProbability * 100);
 	}
 }

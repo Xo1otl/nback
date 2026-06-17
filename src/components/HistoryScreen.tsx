@@ -17,10 +17,7 @@ import { fmtDPrime, meanDPrime } from "@/lib/score";
 
 const NO_MATCH = "No sessions match this search.";
 
-/** Screen 5 — past sessions as one searchable d′ trend + a flat list. A token
- * search (`analysis.parseQuery`/`matchesQuery`) lets the user pick exactly which
- * sessions to compare — modalities, specific options, timing, match rate. Thin
- * wiring over the `components/history/*` pieces. */
+/** Screen 5 — token search over saved sessions; renders a d′ trend + flat list. */
 export function HistoryScreen({
 	onBack,
 	onSelect,
@@ -50,8 +47,7 @@ export function HistoryScreen({
 	const finite = matching
 		.map((p) => p.dp)
 		.filter((d): d is number => d != null && Number.isFinite(d));
-	// One definition of "latest": the most recent FINITE d′ — shared by the
-	// headline number, the delta, and the emphasized trend dot, so they agree.
+	// latest = most recent FINITE d′; headline/delta/trend-dot must share it
 	const latestDp = finite.length ? finite[finite.length - 1]! : null;
 	const deltaDp =
 		finite.length >= 2

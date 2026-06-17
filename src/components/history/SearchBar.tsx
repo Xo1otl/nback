@@ -6,9 +6,7 @@ import { cn } from "@/lib/utils";
 
 const PLACEHOLDER = "e.g. n:2 color:red,green char:* time:<2500";
 
-/** Token search box for the History screen. The query *semantics* live in
- * `analysis` (parse/match); this is purely the input + parsed-token feedback so
- * the text grammar stays discoverable despite being free text. */
+/** Token search input + parsed-token feedback; query semantics live in `analysis`. */
 export function SearchBar({
 	query,
 	tokens,

@@ -128,10 +128,7 @@ export type SessionState = {
 	readonly responses: readonly ModResponse[];
 };
 
-// ---- Events (§Events) — a clean discriminated union ----
-//
-// `contract-go` types these as `any`; here each event carries a `type`
-// discriminant so the log is a fully-typed `Event[]`.
+// ---- Events (§Events) — discriminated union; log is a typed `Event[]` ----
 
 export type Responded = {
 	readonly type: "responded";
@@ -210,7 +207,7 @@ export interface RandomSource {
 	intn(n: number): number;
 }
 
-// ---- Derived helpers (Go receivers -> functions) ----
+// ---- Derived helpers ----
 
 /** Total trials T = N + problemCount (§Trials). */
 export function totalTrials(spec: SessionSpec): number {

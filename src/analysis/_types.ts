@@ -9,11 +9,6 @@
 import type * as game from "@/game";
 
 // ---- Per-trial projection ----
-//
-// The `Outcome` vocabulary (cells + `outcomeOf` + the predicates) lives in
-// `game` now — it is the shared judgment used by both the live `driver`
-// feedback and this projection — and is re-exported from this package's
-// `index.ts` for convenience.
 
 export type ModJudgment = {
 	readonly mod: game.ModID;

@@ -1,13 +1,9 @@
 /**
- * The game's single window-level keyboard handler, encapsulated. Pulling it out
- * of the screen component keeps `GameScreen` a declarative snapshot→layout
- * projection.
- *
- * It binds ONE `window` listener for the component's lifetime and reads the
- * latest props through a ref updated each render. The ref's only reader is this
- * post-commit event handler, so the render-time write is safe (no stale closure,
- * no per-render re-binding churn). Keys are gated to exactly mirror the driver's
- * own guards; `paused` lets an open modal own the keyboard.
+ * Game's single window-level keyboard handler. Binds ONE `window` listener for
+ * the mount's lifetime; reads latest props via render-updated ref.
+ * INVARIANT: ref's only reader is this post-commit handler, so render-time write
+ * is safe — do not move it into an effect (adds staleness).
+ * Keys mirror driver's guards; `paused` lets open modal own the keyboard.
  */
 
 import { useEffect, useRef } from "react";

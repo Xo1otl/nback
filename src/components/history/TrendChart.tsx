@@ -8,9 +8,7 @@ const TREND_HEIGHT = 96;
  * mean d′, and timestamp (for the tooltip). */
 type TrendPoint = { readonly i: number; readonly dp: number; readonly createdAt: number };
 
-/** Inner SVG of the d′ trend — assumes a measured width and ≥2 finite points.
- * 0-anchored y-scale with integer gridlines keeps the trajectory honest; each
- * session is a dot (latest emphasized) with a date + d′ hover tooltip. */
+/** Inner SVG of the d′ trend. Assumes measured width and ≥2 finite points. */
 function TrendChart({
 	width,
 	total,
@@ -104,8 +102,7 @@ function TrendChart({
 	);
 }
 
-/** The d′ trend graph for the filtered sessions. Reserves height and measures
- * its width, then plots once it has ≥2 finite points. */
+/** d′ trend for filtered sessions; plots once measured width + ≥2 finite points. */
 export function DPrimeTrend({ points }: { points: readonly ScoredSession[] }) {
 	const [ref, width] = useElementWidth<HTMLDivElement>();
 	const series: TrendPoint[] = points.flatMap((p, i) =>

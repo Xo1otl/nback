@@ -1,7 +1,4 @@
-/**
- * The single default `SessionConfig` factory, shared by instant Play (top
- * screen) and the config form, so the two entry paths can never drift.
- */
+/** Default `SessionConfig` factory; shared by Play + config form (no drift). */
 
 import * as game from "@/game";
 

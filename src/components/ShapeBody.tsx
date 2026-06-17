@@ -1,15 +1,8 @@
-/**
- * The shape geometry for one stimulus, as SVG within a `0 0 100 100` viewBox.
- * A neutral, stateless primitive shared by the in-game `CompositeStimulus` and
- * the config `ShapePicker`, so the picker shows the exact in-game shapes without
- * the config area reaching into the game area for it.
- */
+/** Shape geometry for one stimulus, SVG in a `0 0 100 100` viewBox. */
 
 import type { ShapeKind } from "@/lib/modalityTheme";
 
-// Theme-aware parity outline (`--stim-outline` in index.css): a light rim on the
-// dark stage, a dark rim on the light stage, so every shape keeps a crisp edge
-// against the current stage background in both themes.
+// Theme-aware outline (--stim-outline in index.css): keeps a crisp edge in both themes.
 const OUTLINE = "var(--stim-outline)";
 
 export function ShapeBody({ kind, fill }: { kind: ShapeKind; fill: string }) {

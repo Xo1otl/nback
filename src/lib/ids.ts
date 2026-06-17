@@ -1,5 +1,4 @@
-/** Identifier helpers for sessions. These live at the UI edge (the domain
- * never invents IDs or reads randomness outside the seeded stimulus RNG). */
+/** Session id helpers; IDs/randomness live at UI edge, not the domain. */
 
 /** A fresh, unique session id (UUID where available). */
 export function newSessionId(): string {

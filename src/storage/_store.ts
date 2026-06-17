@@ -19,8 +19,7 @@ function readRaw(): game.SessionRecord[] {
 	if (!raw) return [];
 	try {
 		const parsed: unknown = JSON.parse(raw);
-		// We own every write, so a parsed array is trusted as-is — no per-record
-		// shape check (there's no legacy data shape to defend against yet).
+		// We own every write; trust a parsed array as-is (no per-record shape check).
 		return Array.isArray(parsed) ? (parsed as game.SessionRecord[]) : [];
 	} catch {
 		return [];
@@ -32,8 +31,7 @@ function writeRaw(records: readonly game.SessionRecord[]): void {
 	try {
 		localStorage.setItem(KEY, JSON.stringify(records));
 	} catch {
-		// Quota exceeded or storage disabled — drop silently; persistence is a
-		// best-effort convenience, never a correctness dependency for play.
+		// Quota/disabled storage: drop silently. Persistence is best-effort, never required for play.
 	}
 }
 
@@ -42,8 +40,7 @@ export function loadSessions(): game.SessionRecord[] {
 	return readRaw();
 }
 
-/** Append a completed record. The play time lives on the record (`createdAt`),
- * so storage no longer stamps its own timestamp. */
+/** Append a completed record (its `createdAt` is the play time). */
 export function saveSession(record: game.SessionRecord): void {
 	writeRaw([...readRaw(), record]);
 }

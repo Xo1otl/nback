@@ -1,8 +1,4 @@
-/**
- * Display metadata for the known modalities, shared by every screen (config
- * pickers, the game HUD/response pad, analysis & history tables). Pure
- * presentation — the `game` package owns the canonical IDs and option sets.
- */
+/** Presentation metadata for modalities; `game` owns canonical IDs/options. */
 
 import type { ComponentType } from "react";
 import {
@@ -73,10 +69,8 @@ export function optionLabel(mod: game.ModID, value: game.Option): string {
 		case game.MOD_COLOR:
 		case game.MOD_SHAPE:
 		case game.MOD_ANIMATION:
-			// Stable-id values are lowercase words → Title Case for display.
 			return value.charAt(0).toUpperCase() + value.slice(1);
 		default:
-			// character / audio: the glyph or spoken letter shows as-is.
 			return value;
 	}
 }
@@ -91,11 +85,7 @@ export const ALL_MODS: readonly game.ModID[] = [
 	game.MOD_ANIMATION,
 ];
 
-/**
- * `ids` in canonical (`ALL_MODS`) order — the single home for canonical modality
- * ordering. Order-independent and total: unknown ids (not in `ALL_MODS`) sort
- * last, tie-broken lexically, so the same set always orders identically.
- * Internal — `sortedModIds` is the exported entry point. */
+/** `ids` in `ALL_MODS` order; unknowns sort last, lexical tiebreak (total/stable). */
 function modsInOrder(ids: readonly game.ModID[]): game.ModID[] {
 	const rank = (m: game.ModID): number => {
 		const i = ALL_MODS.indexOf(m);

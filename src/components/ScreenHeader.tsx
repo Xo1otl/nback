@@ -1,8 +1,4 @@
-/**
- * The standard screen header — a ghost Back button + title, with an optional
- * trailing action slot. Shared by the Config and History screens. (Analysis
- * uses a deliberately-centered header and intentionally does not use this.)
- */
+/** Ghost Back button + title + optional trailing action slot. */
 
 import type { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";

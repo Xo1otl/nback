@@ -1,23 +1,12 @@
-/**
- * Game-visual theme for the modalities — the single source for how each
- * modality value is *drawn* (stimulus colors, shape geometry, animation class),
- * how outcomes are skinned on the response pads, and the key bindings. Kept
- * separate from `lib/modalities.ts` (icons/labels/order) because this layer is
- * specific to the game screen's rendering.
- */
+/** How each modality value is drawn (colors, shapes, animation), outcome pad skins, and key bindings. */
 
 import type { ComponentType } from "react";
 import { ArrowUp, Check, Minus, X } from "lucide-react";
 
 import * as game from "@/game";
 
-// ---- Stimulus colors -------------------------------------------------------
-//
-// Semantic tokens (e.g. `--primary`) flip between the light and dark themes, so
-// stimulus fills must NOT reuse them — they are fixed, mid-tone saturated
-// swatches chosen to read against BOTH the light and dark stage backgrounds.
-// Each shape also carries a theme-aware parity outline (`--stim-outline`, see
-// the renderer) that flips light/dark with the stage for edge definition.
+// HAZARD: stimulus fills must be fixed swatches, NOT theme tokens (those flip
+// light/dark); these must read on both stage backgrounds.
 
 export const STIM_COLORS: Record<string, string> = {
 	[game.COLOR_RED]: "oklch(0.62 0.21 25)",
@@ -65,7 +54,7 @@ export function shapeKind(shape: string | undefined): ShapeKind {
 		case game.SHAPE_ELLIPSE:
 			return "ellipse";
 		default:
-			// shape disabled → a neutral carrier token for the other channels.
+			// shape disabled → neutral carrier for other channels
 			return "token";
 	}
 }
@@ -95,10 +84,7 @@ export type OutcomeSkin = {
 	readonly Icon: ComponentType<{ className?: string }>;
 };
 
-// Literal keys (not the `OUTCOME_*` constants, whose type is the full union)
-// so this satisfies `Record<Outcome, OutcomeSkin>`.
-// Each skin pairs a light-mode (`-700`) and dark-mode (`dark:-300`) text shade
-// so the feedback reads on both stages; the alpha-tinted bg/border work as-is.
+// Literal keys (not OUTCOME_* consts, typed as full union) to satisfy Record<Outcome,_>.
 const SKINS: Record<game.Outcome, OutcomeSkin> = {
 	H: {
 		word: "Hit",
@@ -130,11 +116,7 @@ export function outcomeSkin(o: game.Outcome): OutcomeSkin {
 	return SKINS[o];
 }
 
-// ---- Key bindings ----------------------------------------------------------
-//
-// Stable per-modality keys so muscle memory holds regardless of which subset is
-// enabled. `c`→color and `a`→audio take the obvious letters; character falls
-// back to `h` (cHaracter) and animation to `m` (Motion).
+// Stable per-modality keys (subset-independent). character=h (cHaracter), animation=m (Motion).
 
 export const KEY_FOR_MOD: Record<string, string> = {
 	[game.MOD_POSITION]: "p",

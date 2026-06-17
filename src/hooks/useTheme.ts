@@ -1,9 +1,8 @@
 /**
- * React binding for the theme model (`lib/theme.ts`). The theme is a single
- * global, so a module-level store read via `useSyncExternalStore` is the whole
- * state model — no Context ceremony. `setThemeMode` writes the DOM + localStorage
- * and notifies subscribers; while the mode is `"system"`, the store also tracks
- * live OS `prefers-color-scheme` changes.
+ * React binding for the theme model (`lib/theme.ts`): a module-level store read
+ * via `useSyncExternalStore`. `setThemeMode` writes DOM + localStorage and
+ * notifies subscribers; in `"system"` mode the store also tracks live OS
+ * `prefers-color-scheme` changes.
  */
 
 import { useSyncExternalStore } from "react";

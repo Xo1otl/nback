@@ -136,9 +136,7 @@ function GameView({
 		onCancel: onHome,
 	});
 
-	// Persist exactly once when the session reaches a terminal state. (The
-	// abandon-on-unmount path is owned by useGameSession; the two are mutually
-	// exclusive — a terminal session is never `running`.)
+	// Persist exactly once on terminal.
 	const persisted = useRef(false);
 	useEffect(() => {
 		if (terminal && !persisted.current) {
@@ -158,8 +156,7 @@ function GameView({
 		}
 	}
 
-	// Spoken announcement for assistive tech — the feedback loop is otherwise
-	// visual-only. Verbalize per-mod outcomes and phase changes.
+	// AT-only announcement; feedback is otherwise visual.
 	let announce = "";
 	if (status === "running") {
 		if (phase === "feedback" && snapshot.feedback) {
