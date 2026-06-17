@@ -6,6 +6,16 @@ import * as analysis from "@/analysis";
 import * as storage from "@/storage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
 import { Shell } from "@/components/Shell";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { DeltaChip } from "@/components/history/DeltaChip";
@@ -68,18 +78,43 @@ export function HistoryScreen({
 					onBack={onBack}
 					action={
 						all.length > 0 ? (
-							<Button
-								variant="ghost"
-								size="sm"
-								className="ml-auto text-muted-foreground"
-								onClick={() => {
-									storage.clearSessions();
-									onQueryChange("");
-									setReload((x) => x + 1);
-								}}
-							>
-								<Trash2 /> Clear
-							</Button>
+							<Dialog>
+								<DialogTrigger asChild>
+									<Button
+										variant="ghost"
+										size="sm"
+										className="ml-auto text-muted-foreground"
+									>
+										<Trash2 /> Clear
+									</Button>
+								</DialogTrigger>
+								<DialogContent>
+									<DialogHeader>
+										<DialogTitle>Clear all sessions?</DialogTitle>
+										<DialogDescription>
+											This permanently removes all {all.length} saved sessions.
+											This can&rsquo;t be undone.
+										</DialogDescription>
+									</DialogHeader>
+									<DialogFooter>
+										<DialogClose asChild>
+											<Button variant="outline">Cancel</Button>
+										</DialogClose>
+										<DialogClose asChild>
+											<Button
+												variant="destructive"
+												onClick={() => {
+													storage.clearSessions();
+													onQueryChange("");
+													setReload((x) => x + 1);
+												}}
+											>
+												<Trash2 /> Clear all
+											</Button>
+										</DialogClose>
+									</DialogFooter>
+								</DialogContent>
+							</Dialog>
 						) : undefined
 					}
 				/>
@@ -141,6 +176,10 @@ export function HistoryScreen({
 											key={p.record.id}
 											scored={p}
 											onSelect={onSelect}
+											onDelete={(id) => {
+												storage.deleteSession(id);
+												setReload((x) => x + 1);
+											}}
 										/>
 									))
 							)}

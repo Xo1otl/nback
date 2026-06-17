@@ -5,9 +5,10 @@
  */
 
 export {
-	loadSessions,
-	saveSession,
 	clearSessions,
+	deleteSession,
 	loadHistoryQuery,
+	loadSessions,
 	saveHistoryQuery,
+	saveSession,
 } from "./_store";

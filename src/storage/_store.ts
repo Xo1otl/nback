@@ -45,6 +45,11 @@ export function saveSession(record: game.SessionRecord): void {
 	writeRaw([...readRaw(), record]);
 }
 
+/** Forget a single saved session by id (no-op if the id isn't present). */
+export function deleteSession(id: game.SessionID): void {
+	writeRaw(readRaw().filter((record) => record.id !== id));
+}
+
 /** Forget every saved session. */
 export function clearSessions(): void {
 	if (typeof localStorage === "undefined") return;

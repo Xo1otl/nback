@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Check, Copy, Home, History, RotateCcw } from "lucide-react";
 
 import * as analysis from "@/analysis";
-import * as game from "@/game";
+import type * as game from "@/game";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -214,7 +214,7 @@ export function AnalysisScreen({
 
 				<div className="flex flex-wrap gap-3">
 					<Button className="flex-1" onClick={onPlayAgain}>
-						<RotateCcw /> Play &amp; make these current
+						<RotateCcw /> Apply settings &amp; Play
 					</Button>
 					<Button variant="outline" onClick={onHistory}>
 						<History /> History
