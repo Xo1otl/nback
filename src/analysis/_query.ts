@@ -5,7 +5,7 @@
  * depends only on `game`, and is reusable from any front end. The UI owns only
  * the input box that feeds it a string.
  *
- * NOT a grammar/DSL: whitespace-separated `key:value` tokens, AND-combined.
+ * Whitespace-separated `key:value` tokens, AND-combined.
  *   - modality option keys — `color:red,green`, `char:A,B`, `audio:A`, `pos:*`,
  *     `shape:square`, `anim:blur`. A modality is ENABLED iff its key appears;
  *     the mentioned keys define the EXACT enabled set (unmentioned ⇒ OFF), but

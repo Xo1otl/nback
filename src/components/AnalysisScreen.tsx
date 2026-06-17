@@ -42,7 +42,7 @@ function CopyQueryButton({ query }: { query: string }) {
 			}}
 		>
 			{copied ? <Check /> : <Copy />}
-			{copied ? "Copied" : "Copy query"}
+			{copied ? "Copied" : "Copy as search"}
 		</Button>
 	);
 }
