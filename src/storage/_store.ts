@@ -45,19 +45,16 @@ export function saveSession(record: game.SessionRecord): void {
 	writeRaw([...readRaw(), record]);
 }
 
-/** Forget a single saved session by id (no-op if the id isn't present). */
-export function deleteSession(id: game.SessionID): void {
-	writeRaw(readRaw().filter((record) => record.id !== id));
+/** Forget every saved session whose id is in `ids` (no-op for ids not present). */
+export function deleteSessions(ids: readonly game.SessionID[]): void {
+	const drop = new Set(ids);
+	if (drop.size === 0) return;
+	writeRaw(readRaw().filter((record) => !drop.has(record.id)));
 }
 
-/** Forget every saved session. */
-export function clearSessions(): void {
-	if (typeof localStorage === "undefined") return;
-	try {
-		localStorage.removeItem(KEY);
-	} catch {
-		// ignore
-	}
+/** Forget a single saved session by id (no-op if the id isn't present). */
+export function deleteSession(id: game.SessionID): void {
+	deleteSessions([id]);
 }
 
 /** The persisted History search query, or `null` if unset / unavailable. */

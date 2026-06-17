@@ -60,6 +60,20 @@ export function HistoryScreen({
 			analysis.matchesQuery(p.record.spec, tokens) &&
 			withinPeriod(p.record.createdAt, period, now),
 	);
+	// A search/period filter is narrowing the view iff fewer sessions match than exist.
+	// "Clear" removes exactly what's shown, so its copy follows the same split.
+	const filtered = matching.length < all.length;
+	const clearCopy = filtered
+		? {
+				title: "Clear matching sessions?",
+				body: `This permanently removes the ${matching.length} session${matching.length === 1 ? "" : "s"} matching the current search and time filter. This can’t be undone.`,
+				confirm: `Clear ${matching.length}`,
+			}
+		: {
+				title: "Clear all sessions?",
+				body: `This permanently removes all ${all.length} saved sessions. This can’t be undone.`,
+				confirm: "Clear all",
+			};
 	const finite = matching
 		.map((p) => p.dp)
 		.filter((d): d is number => d != null && Number.isFinite(d));
@@ -77,7 +91,7 @@ export function HistoryScreen({
 					title="History"
 					onBack={onBack}
 					action={
-						all.length > 0 ? (
+						matching.length > 0 ? (
 							<Dialog>
 								<DialogTrigger asChild>
 									<Button
@@ -90,11 +104,8 @@ export function HistoryScreen({
 								</DialogTrigger>
 								<DialogContent>
 									<DialogHeader>
-										<DialogTitle>Clear all sessions?</DialogTitle>
-										<DialogDescription>
-											This permanently removes all {all.length} saved sessions.
-											This can&rsquo;t be undone.
-										</DialogDescription>
+										<DialogTitle>{clearCopy.title}</DialogTitle>
+										<DialogDescription>{clearCopy.body}</DialogDescription>
 									</DialogHeader>
 									<DialogFooter>
 										<DialogClose asChild>
@@ -104,12 +115,16 @@ export function HistoryScreen({
 											<Button
 												variant="destructive"
 												onClick={() => {
-													storage.clearSessions();
-													onQueryChange("");
+													storage.deleteSessions(
+														matching.map((p) => p.record.id),
+													);
+													// Clearing the whole list also resets the saved query;
+													// a filtered clear leaves the search in place.
+													if (!filtered) onQueryChange("");
 													setReload((x) => x + 1);
 												}}
 											>
-												<Trash2 /> Clear all
+												<Trash2 /> {clearCopy.confirm}
 											</Button>
 										</DialogClose>
 									</DialogFooter>

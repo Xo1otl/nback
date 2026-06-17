@@ -5,8 +5,8 @@
  */
 
 export {
-	clearSessions,
 	deleteSession,
+	deleteSessions,
 	loadHistoryQuery,
 	loadSessions,
 	saveHistoryQuery,
