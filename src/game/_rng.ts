@@ -1,9 +1,4 @@
-/**
- * Seedable {@link RandomSource}. Stimulus generation is the only consumer of
- * randomness, and a session's `seed` is stored in its record, so generation is
- * fully reproducible: `generateStimuli(spec, newRandomSource(seed))` is
- * deterministic for a given (spec, seed).
- */
+/** Seedable {@link RandomSource}. INVARIANT: generateStimuli(spec, newRandomSource(seed)) is deterministic per (spec, seed). */
 
 import type { RandomSeed, RandomSource } from "./_types";
 

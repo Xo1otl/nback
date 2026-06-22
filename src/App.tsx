@@ -14,7 +14,7 @@ import { newSessionId, randomSeed } from "@/lib/ids";
 import { defaultSessionConfig } from "@/lib/sessionConfig";
 import * as analysis from "@/analysis";
 
-/** Screen state machine; union makes illegal states unrepresentable. */
+/** Screen state machine. */
 type Screen =
 	| { k: "top" }
 	| { k: "config" }
@@ -27,14 +27,12 @@ type Screen =
 	| { k: "analysis"; record: game.SessionRecord }
 	| { k: "history" };
 
-/** The most recent saved config (a `SessionSpec` is structurally a config), or
- * the default — used to seed instant Play and pre-fill the config form. */
+/** Last saved config (SessionSpec is structurally a config) else default. */
 function initialConfig(): game.SessionConfig {
 	return storage.loadSessions().at(-1)?.spec ?? defaultSessionConfig();
 }
 
-/** The persisted History query, else the latest session's default query (so on
- * a fresh install History opens on a comparable trend), else "" (all). */
+/** Persisted query, else latest session's default query, else "" (all). */
 function initialHistoryQuery(): string {
 	const persisted = storage.loadHistoryQuery();
 	if (persisted !== null) return persisted;
@@ -44,17 +42,15 @@ function initialHistoryQuery(): string {
 
 export function App() {
 	const [screen, setScreen] = useState<Screen>({ k: "top" });
-	// The current/last config: instant Play and the config form both start here.
 	const [config, setConfig] = useState<game.SessionConfig>(initialConfig);
-	// History search query — lifted here (like `config`) so it survives leaving
-	// and reopening the screen, and persisted so it survives a reload too.
+	// History query — lifted + persisted; survives screen switch and reload.
 	const [historyQuery, setHistoryQuery] = useState<string>(initialHistoryQuery);
 	function changeHistoryQuery(next: string) {
 		setHistoryQuery(next);
 		storage.saveHistoryQuery(next);
 	}
 
-	// React-side theme source of truth; index.html does the pre-paint apply. Idempotent.
+	// SYNC: index.html pre-paint applies theme before this re-applies.
 	useEffect(() => {
 		theme.applyStoredTheme();
 	}, []);
@@ -77,8 +73,7 @@ export function App() {
 			return (
 				<ConfigScreen
 					initial={config}
-					// Config is a settings editor, not a launch point: Back commits the
-					// edited settings so the next Play (from top) uses them.
+					// Back commits edited settings for next Play.
 					onBack={(cfg) => {
 						setConfig(cfg);
 						setScreen({ k: "top" });
@@ -88,7 +83,7 @@ export function App() {
 		case "game":
 			return (
 				<GameScreen
-					// fresh driver per session
+					// INVARIANT: key per id → remount → fresh driver per session
 					key={screen.id}
 					config={screen.config}
 					id={screen.id}
@@ -102,7 +97,6 @@ export function App() {
 			return (
 				<AnalysisScreen
 					record={screen.record}
-					// Replay the same settings with fresh stimuli (new seed).
 					onPlayAgain={() => startGame(screen.record.spec, randomSeed())}
 					onHistory={() => setScreen({ k: "history" })}
 					onHome={() => setScreen({ k: "top" })}

@@ -1,9 +1,6 @@
 /**
- * Data model for analysis projections over a `game.SessionRecord`
- * (port of `contract-go/analysis`).
- *
- * Depends on `game`, never the reverse. Section references (§) point to
- * `contract-go/analysis/specs.md`.
+ * Data model for analysis projections over a `game.SessionRecord`.
+ * INVARIANT: depends on `game`, never reverse. § → `./specs.md`.
  */
 
 import type * as game from "@/game";

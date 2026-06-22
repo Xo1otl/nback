@@ -1,12 +1,6 @@
 /**
- * Data model for the multiplex n-back game (port of `contract-go/game`).
- *
- * This package is pure TypeScript and UI-framework-agnostic: it holds no
- * timers and never reads the clock (§Timing) — a driver dispatches events and
- * supplies offsets. Data are plain immutable values; behavior lives in
- * module-level functions (see `_spec`, `_stimuli`, `_session`).
- *
- * Section references (§) point to `contract-go/game/specs.md`.
+ * Game data model. INVARIANT: no clock/timers; driver supplies all offsets (§Timing).
+ * § refs → specs.md.
  */
 
 // ---- Scalar aliases (spec-level distinctions; structurally plain) ----
@@ -118,13 +112,7 @@ export type SessionState = {
 	readonly trial: TrialIndex;
 	/** Offset of the current responding-phase onset (0 at t=0, else nextTrial offset). */
 	readonly respondingOnset: Milliseconds;
-	/**
-	 * Final accepted response action per modality for the CURRENT trial — the
-	 * fold that live feedback needs (last accepted action wins; a modality absent
-	 * here is disengaged). Reset on entering the next trial. The append-only
-	 * event log remains the SSOT; this is its current-trial view, maintained
-	 * incrementally so drivers never replay the log to render feedback.
-	 */
+	/** Current-trial final action per mod; last accepted wins; absent→disengaged; reset on nextTrial. INVARIANT: event log is SSOT, this is its incremental view. */
 	readonly responses: readonly ModResponse[];
 };
 
@@ -186,9 +174,7 @@ export function newSessionRecord(
 		id,
 		spec,
 		seed,
-		// Copy the arrays so the record is a true immutable snapshot, decoupled
-		// from any live mutable producer (e.g. the driver's growing event log,
-		// which it keeps pushing to after `record()` hands out a SessionRecord).
+		// HAZARD: copy; driver keeps mutating its live log after record() returns.
 		stimuli: [...stimuli],
 		createdAt,
 		events: [...events],
@@ -197,11 +183,7 @@ export function newSessionRecord(
 
 // ---- Randomness (§Generation) ----
 
-/**
- * Source of randomness for stimulus generation. Mirrors Go's `RandomSource`:
- * `float64()` in [0, 1), `intn(n)` a uniform integer in [0, n).
- * See {@link newRandomSource} in `_rng` for a seedable implementation.
- */
+/** Randomness for stimulus generation; float64→[0,1), intn(n)→[0,n). Seedable impl: {@link newRandomSource}. */
 export interface RandomSource {
 	float64(): number;
 	intn(n: number): number;
@@ -232,19 +214,12 @@ export function trialStimulusValue(
 	return t.values.find((v) => v.mod === id)?.value;
 }
 
-/** Stable-ID equality of two modality stimuli (§Modalities, Match). */
-export function sameStimulus(a: ModStimulus, b: ModStimulus): boolean {
-	return a.mod === b.mod && a.value === b.value;
-}
-
 /** The current trial's final accepted action for a modality (default disengage). */
 export function responseFor(state: SessionState, id: ModID): ResponseAction {
 	return state.responses.find((r) => r.mod === id)?.action ?? ACTION_DISENGAGE;
 }
 
-/** Whether `id` is engaged given a current-trial response fold — the shape both
- * `SessionState` and the driver's `SessionSnapshot` expose, so a UI reading the
- * snapshot shares one definition with the state machine. */
+/** Engaged-check over a response fold. SYNC: shared by SessionState + driver SessionSnapshot. */
 export function engagedIn(responses: readonly ModResponse[], id: ModID): boolean {
 	return responses.find((r) => r.mod === id)?.action === ACTION_ENGAGE;
 }
@@ -255,11 +230,7 @@ export function isEngaged(state: SessionState, id: ModID): boolean {
 }
 
 // ---- Scoring vocabulary (§Scoring) ----
-//
-// The single home for the three rules that define a scored trial: the match
-// rule, the response fold, and the match×engaged confusion-matrix cell. Both
-// the live `driver` feedback and the post-hoc `analysis` projection consume
-// these, so the two views can never drift.
+// SYNC: driver feedback + analysis projection both consume these.
 
 /** The SDT confusion-matrix cells. */
 export type Outcome = "H" | "M" | "F" | "C";
@@ -323,12 +294,7 @@ export function matchAt(
 	return curValue === prevValue;
 }
 
-/**
- * Replay a trial's `responded` events into the final engaged state for `mod`
- * (last accepted action wins; default disengaged). This is the log-replay
- * equivalent of the live incremental fold read via {@link responseFor} /
- * {@link isEngaged}; both implement the same §Scoring rule over the SSOT.
- */
+/** Replay responded events → final engaged for `mod` (last accepted wins; default disengaged). SYNC: must agree with live fold {@link isEngaged}. */
 export function finalEngagedFrom(
 	responded: readonly Responded[],
 	mod: ModID,

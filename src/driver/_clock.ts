@@ -1,12 +1,4 @@
-/**
- * Default browser {@link Clock}: a monotonic high-resolution clock (`now`), a
- * wall-clock (`epochNow`), and `setTimeout`-based scheduling. Injected into the
- * driver in production; tests pass a fake clock instead.
- *
- * Note: `now` uses `performance.now()`. For frame-accurate origin/offsets you
- * can supply a clock whose `now` is read inside a `requestAnimationFrame`
- * callback (v-sync aligned, per §Timing); the driver does not assume one.
- */
+/** Default browser {@link Clock}: performance.now() + Date.now() + setTimeout. */
 
 import type { Clock } from "./_types";
 

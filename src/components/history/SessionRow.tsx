@@ -15,14 +15,7 @@ import type * as game from "@/game";
 import { modMeta, sortedModIds } from "@/lib/modalities";
 import { fmtDPrime } from "@/lib/score";
 
-/**
- * One session in the flat list: N badge + modality fingerprint + date + d′.
- *
- * The row is two sibling controls inside one bordered card (not a single
- * button — a delete `<button>` can't nest inside the open `<button>`): the
- * open button fills the row, and a trailing delete column confirms via dialog
- * before calling `onDelete`.
- */
+/** HAZARD: open + delete are sibling buttons, not nested — a <button> can't nest in a <button>. */
 export function SessionRow({
 	scored,
 	onSelect,

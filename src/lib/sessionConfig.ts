@@ -1,4 +1,4 @@
-/** Default `SessionConfig` factory; shared by Play + config form (no drift). */
+/** Default `SessionConfig` factory; shared by Play + config form. */
 
 import * as game from "@/game";
 
@@ -9,8 +9,7 @@ export const DEFAULT_MODS: readonly game.ModID[] = [
 	game.MOD_CHARACTER,
 ];
 
-/** A config's match rate as a whole percent — the unit the config UI and the
- * History filter share. Inverse of {@link matchProbabilityFromPct}. */
+/** Match rate as whole percent. Inverse of {@link matchProbabilityFromPct}. */
 export function matchPctOf(config: game.SessionConfig): number {
 	return Math.round(config.matchProbability * 100);
 }

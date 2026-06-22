@@ -1,4 +1,4 @@
-/** Session id helpers; IDs/randomness live at UI edge, not the domain. */
+/** Session id helpers; IDs/randomness at UI edge, not domain. */
 
 /** A fresh, unique session id (UUID where available). */
 export function newSessionId(): string {

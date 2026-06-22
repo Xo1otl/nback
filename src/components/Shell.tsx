@@ -2,11 +2,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-/**
- * Full-viewport app frame. Screens render inside it and control their own
- * inner layout; `Shell` only guarantees a min-height, horizontal padding, and
- * a column flow so content can center or stretch as each screen needs.
- */
+/** Full-viewport app frame; screens control their own inner layout. */
 export function Shell({
 	children,
 	className,

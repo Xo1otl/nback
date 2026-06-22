@@ -1,8 +1,4 @@
-/**
- * Slim top HUD: N level, 1-indexed trial counter, a memorize→scored progress
- * track, the live scored/memorize indicator, and a quiet Quit affordance.
- * Never shows a running score (keeps attention on the next stimulus).
- */
+/** Top HUD: N, trial counter, progress track, scored/memorize indicator, Quit. INVARIANT: never show running score. */
 
 import { X } from "lucide-react";
 
@@ -23,8 +19,7 @@ export function GameHud({
 	showQuit: boolean;
 	onQuit: () => void;
 }) {
-	// Before Start the driver reports trial 0; don't render it as "1/total" with
-	// a filled bar — only count progress once the session has actually begun.
+	// pre-Start driver reports trial 0 → show 0/total, empty bar
 	const started = snapshot.status !== "idle";
 	const shown = started ? Math.min(snapshot.trial + 1, total) : 0;
 	const memorizePct = total > 0 ? (n / total) * 100 : 0;
@@ -63,6 +58,7 @@ export function GameHud({
 				<Button
 					variant="ghost"
 					size="sm"
+					aria-label="Quit session"
 					className="shrink-0 text-muted-foreground"
 					onClick={onQuit}
 				>

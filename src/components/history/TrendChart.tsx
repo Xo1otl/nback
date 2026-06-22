@@ -4,8 +4,7 @@ import { fmtDPrime } from "@/lib/score";
 
 const TREND_HEIGHT = 96;
 
-/** A finite point on the trend: its index (so a blank session leaves a gap),
- * mean d′, and timestamp (for the tooltip). */
+/** INVARIANT: i = index into full points list → blank sessions leave a gap. */
 type TrendPoint = { readonly i: number; readonly dp: number; readonly createdAt: number };
 
 /** Inner SVG of the d′ trend. Assumes measured width and ≥2 finite points. */
@@ -102,7 +101,6 @@ function TrendChart({
 	);
 }
 
-/** d′ trend for filtered sessions; plots once measured width + ≥2 finite points. */
 export function DPrimeTrend({ points }: { points: readonly ScoredSession[] }) {
 	const [ref, width] = useElementWidth<HTMLDivElement>();
 	const series: TrendPoint[] = points.flatMap((p, i) =>

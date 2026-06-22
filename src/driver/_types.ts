@@ -1,18 +1,4 @@
-/**
- * Public surface of the `driver` package — the framework-agnostic session
- * runtime that drives the pure `game` state machine over real time.
- *
- * The domain (`game`) is a passive, deterministic state machine that never
- * reads the clock. The driver is the *active* side of that pairing: it owns the
- * clock and the phase timers, threads {@link game.SessionState} through the
- * reducers, accumulates the append-only event log, and publishes an immutable
- * {@link SessionSnapshot} to subscribers. It depends on `game` only (live
- * feedback is derived from state + stimuli, not from `analysis`).
- *
- * All side effects (clock, scheduling) are injected via {@link Clock}, so the
- * driver is deterministically testable with a fake clock and reusable in any
- * UI framework (bind with React's `useSyncExternalStore`, Svelte stores, etc.).
- */
+/** Public surface of the `driver` package. */
 
 import type * as game from "@/game";
 
@@ -52,11 +38,8 @@ export type SessionSnapshot = {
 };
 
 /**
- * Injected source of time and scheduling — the driver's only side-effect seam.
- * `now` is a monotonic clock in ms (for durations/offsets, immune to wall-clock
- * jumps); `epochNow` is the wall-clock instant (epoch ms) stamped once into the
- * record's `createdAt`; `schedule` runs `fn` after `delayMs` and returns a
- * cancel function.
+ * Injected time/scheduling seam. INVARIANT: `now` monotonic ms → offsets;
+ * `epochNow` wall-clock, stamped once into record.createdAt; `schedule` returns cancel.
  */
 export type Clock = {
 	readonly now: () => game.Milliseconds;
@@ -76,11 +59,7 @@ export type DriverOptions = {
 	readonly deps: DriverDeps;
 };
 
-/**
- * A live session. Construction validates the config and pre-generates the
- * stimulus trace (so the first stimulus is renderable before `start`); the
- * clock does not run until {@link SessionDriver.start}.
- */
+/** A live session. Clock idle until {@link SessionDriver.start}. */
 export interface SessionDriver {
 	/** Current immutable snapshot (stable reference between changes). */
 	getSnapshot(): SessionSnapshot;

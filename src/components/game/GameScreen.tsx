@@ -1,10 +1,4 @@
-/**
- * Screen 3 — the game. A declarative projection of the driver snapshot: it
- * binds the store (`useDriverSnapshot`), wires the imperative seams through
- * named hooks (`useGameKeyboard`, `useStimulusAudio`), and branches across the
- * ready → responding → feedback → done/aborted sub-states. All authority lives
- * in the driver; this screen never runs a real timer.
- */
+/** Game screen — projection of driver snapshot. INVARIANT: driver owns all authority/timing; screen never runs a real timer. */
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -136,7 +130,6 @@ function GameView({
 		onCancel: onHome,
 	});
 
-	// Persist exactly once on terminal.
 	const persisted = useRef(false);
 	useEffect(() => {
 		if (terminal && !persisted.current) {

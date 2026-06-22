@@ -1,9 +1,6 @@
 /**
  * Token search over a session's `SessionSpec` — a small, UI-agnostic query
- * language for selecting/comparing past sessions by their configuration. Lives
- * in `analysis` (the read-side domain layer) rather than the UI: it is pure,
- * depends only on `game`, and is reusable from any front end. The UI owns only
- * the input box that feeds it a string.
+ * language for selecting/comparing past sessions by their configuration.
  *
  * Whitespace-separated `key:value` tokens, AND-combined.
  *   - modality option keys — `color:red,green`, `char:A,B`, `audio:A`, `pos:*`,
@@ -72,7 +69,7 @@ function parseToken(raw: string): Token {
 			const [a, b] = val.split("..");
 			const lo = Number(a);
 			const hi = Number(b);
-			if (!Number.isFinite(lo) || !Number.isFinite(hi))
+			if (a === "" || b === "" || !Number.isFinite(lo) || !Number.isFinite(hi))
 				return { kind: "error", raw, message: "bad range" };
 			return { kind: "range", raw, field, lo, hi };
 		}
@@ -128,10 +125,8 @@ function sameSet(a: readonly game.ModID[], b: readonly game.ModID[]): boolean {
 }
 
 /**
- * Whether a session's config satisfies all (non-error) tokens. Modality tokens,
- * if any, pin the EXACT enabled set (set comparison, so order-independent) and
- * each value list requires `options ⊇`; scalar/range tokens constrain
- * n/timing/match independently.
+ * Whether a session's config satisfies all (non-error) tokens.
+ * Modality tokens, if any, pin the EXACT enabled set; value lists require `options ⊇`.
  */
 export function matchesQuery(spec: game.SessionSpec, tokens: readonly Token[]): boolean {
 	const modTokens = tokens.filter(
@@ -159,18 +154,13 @@ export function matchesQuery(spec: game.SessionSpec, tokens: readonly Token[]): 
 	return true;
 }
 
-/** A starter query for a fresh install: the latest session's n + its modality
- * set (wildcards), so History opens on a comparable protocol; the user edits it.
- * `spec.mods` is already in canonical order (built that way), so no re-sort. */
+/** Starter query for a fresh install: latest session's n + modality set (wildcards). */
 export function defaultQuery(spec: game.SessionSpec): string {
 	const mods = spec.mods.map((m) => `${KEY_FOR_MOD[m.mod] ?? m.mod}:*`);
 	return [`n:${spec.n}`, ...mods].join(" ");
 }
 
-/** The EXACT criteria of a session as a query string — n, every enabled
- * modality with its full option set, match rate, and timing — so it can be
- * pasted into the History search to find/compare like sessions. Round-trips:
- * `matchesQuery(spec, parseQuery(queryForSpec(spec)))` is always true. */
+/** Exact session criteria as a query string; pasteable into History search to find like sessions. */
 export function queryForSpec(spec: game.SessionSpec): string {
 	const parts = [`n:${spec.n}`];
 	for (const m of spec.mods) {

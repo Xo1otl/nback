@@ -1,11 +1,4 @@
-/**
- * Configuration validation & resolution (§Configuration & Validation).
- *
- * {@link validateAndResolveConfig} turns a raw {@link SessionConfig} into a
- * {@link SessionSpec} whose invariants are guaranteed, throwing
- * {@link ConfigError} otherwise. Resolution materializes each enabled mod's
- * option set, filling in canonical defaults when options are omitted.
- */
+/** Config validation & resolution (§Configuration). Materializes each mod's options (canonical defaults when omitted). */
 
 import {
 	CANONICAL_OPTIONS,

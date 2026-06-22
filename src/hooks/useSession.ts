@@ -1,14 +1,5 @@
-/**
- * React bindings for the `driver` runtime.
- *
- * `useGameSession` owns one {@link driver.SessionDriver} per mount (created once,
- * config validated eagerly so a bad config surfaces as an error rather than a
- * thrown render), and stops it when the screen really goes away.
- *
- * `useDriverSnapshot` is the `useSyncExternalStore` binding to the driver's
- * immutable snapshot — the driver publishes a fresh value on every change and
- * keeps the reference stable in between, exactly what the store contract wants.
- */
+// React bindings for driver runtime.
+// useGameSession: one driver per mount; config validated eagerly → bad config = error, not thrown render.
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
 
@@ -29,25 +20,13 @@ export type GameSession = {
 
 type Cell = { driver: driver.SessionDriver | null; error: Error | null };
 
-/**
- * Construct a driver for `config` exactly once for the lifetime of the mount.
- * Construction validates the config and pre-generates the stimulus trace but
- * does NOT start the clock — the caller starts on a user gesture. On a genuine
- * unmount we abort a *running* session to release its timers; we deliberately
- * skip aborting an `idle`/`done`/`aborted` driver so React StrictMode's
- * dev-only mount→unmount→remount cycle (which fires before any `start`) can't
- * abort a session the user has not begun.
- */
+// Driver constructed once per mount; caller starts clock on user gesture.
+// HAZARD: only abort a *running* session on unmount; skipping idle/done/aborted keeps StrictMode mount→unmount→remount from aborting an unstarted session.
 export function useGameSession(
 	config: game.SessionConfig,
 	options: GameSessionOptions,
-	/**
-	 * Called if a still-`running` session is torn down on unmount, with the
-	 * record captured right after the safety abort — so an abandoned run is
-	 * persisted rather than silently lost. The in-screen terminal persist and
-	 * this path are mutually exclusive (a terminal session is not `running`),
-	 * so there is no double-save.
-	 */
+	// Called when a still-running session is torn down on unmount; persists the aborted record.
+	// INVARIANT: terminal session is not running → mutually exclusive with in-screen persist; no double-save.
 	onAbandon?: (record: game.SessionRecord) => void,
 ): GameSession {
 	const ref = useRef<Cell | null>(null);

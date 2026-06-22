@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
-/**
- * Track an element's content-box width in CSS pixels via `ResizeObserver`.
- * Returns a ref to attach plus the width (0 until first measured).
- * HAZARD: width is 0 on the first, unmeasured frame — reserve height at the
- * call site to avoid layout shift.
- */
+// content-box width via ResizeObserver; ref + width.
+// HAZARD: width=0 on first unmeasured frame → reserve height at call site.
 export function useElementWidth<T extends HTMLElement>() {
 	const ref = useRef<T>(null);
 	const [width, setWidth] = useState(0);

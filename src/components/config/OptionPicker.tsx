@@ -1,12 +1,4 @@
-/**
- * Config-screen pickers for a modality's stimulus pool.
- *
- *  - `OptionPicker` — multi-select chips for the value subset of an ordinary
- *    modality (color/character/shape/audio/animation), enforcing the domain's
- *    "at least 2 options" rule by refusing to drop below the minimum.
- *  - `ShapePicker` — single-select predefined arrangements for `position`,
- *    each previewed as a mini grid.
- */
+/** Config-screen pickers for a modality's stimulus pool: OptionPicker (multi-select chips) + ShapePicker (single-select position arrangements). */
 
 import { Volume2 } from "lucide-react";
 
@@ -20,7 +12,7 @@ import { cn } from "@/lib/utils";
 /** The domain requires |O_m| >= 2 (see `game._spec`); mirror it in the UI. */
 export const MIN_OPTIONS = 2;
 
-/** A small in-game-accurate visual for one option value (none for text glyphs). */
+/** In-game-accurate visual for one option value (null for text glyphs). */
 function OptionVisual({ mod, value }: { mod: game.ModID; value: game.Option }) {
 	if (mod === game.MOD_COLOR) {
 		return (
@@ -59,7 +51,6 @@ export function OptionPicker({
 		<div className="flex flex-wrap gap-1.5">
 			{options.map((value) => {
 				const on = selected.has(value);
-				// The last `MIN_OPTIONS` on-chips can't be turned off.
 				const locked = on && atMin;
 				return (
 					<button
@@ -83,6 +74,11 @@ export function OptionPicker({
 						<span className={cn(mod === game.MOD_CHARACTER && "font-mono")}>
 							{optionLabel(mod, value)}
 						</span>
+						{locked && (
+							<span className="sr-only">
+								Keep at least {MIN_OPTIONS} selected
+							</span>
+						)}
 					</button>
 				);
 			})}
@@ -90,7 +86,6 @@ export function OptionPicker({
 	);
 }
 
-/** A small grid rendering of which cells a position shape occupies. */
 function ShapePreview({ options }: { options: game.OptionList }) {
 	const { rows, cols } = gridDims(options);
 	const active = new Set(options);

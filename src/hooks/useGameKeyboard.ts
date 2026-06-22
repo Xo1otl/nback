@@ -1,10 +1,6 @@
-/**
- * Game's single window-level keyboard handler. Binds ONE `window` listener for
- * the mount's lifetime; reads latest props via render-updated ref.
- * INVARIANT: ref's only reader is this post-commit handler, so render-time write
- * is safe — do not move it into an effect (adds staleness).
- * Keys mirror driver's guards; `paused` lets open modal own the keyboard.
- */
+// One window keydown for mount lifetime; latest props via render-updated ref.
+// INVARIANT: ref's only reader = this post-commit handler → render-time write safe; do NOT move into effect.
+// SYNC: keys mirror driver guards.
 
 import { useEffect, useRef } from "react";
 

@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Search, X } from "lucide-react";
 
 import type * as analysis from "@/analysis";
@@ -6,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 const PLACEHOLDER = "e.g. n:2 color:red,green char:* time:<2500";
 
-/** Token search input + parsed-token feedback; query semantics live in `analysis`. */
+/** Query semantics live in `analysis`. */
 export function SearchBar({
 	query,
 	tokens,
@@ -20,6 +21,7 @@ export function SearchBar({
 	total: number;
 	onChange: (query: string) => void;
 }) {
+	const syntaxId = useId();
 	return (
 		<div className="flex flex-col gap-2">
 			<div className="relative">
@@ -33,6 +35,7 @@ export function SearchBar({
 					onChange={(e) => onChange(e.target.value)}
 					placeholder={PLACEHOLDER}
 					aria-label="Search sessions"
+					aria-describedby={syntaxId}
 					spellCheck={false}
 					autoCapitalize="off"
 					autoCorrect="off"
@@ -64,19 +67,30 @@ export function SearchBar({
 							)}
 						>
 							{t.raw}
-							{t.kind === "error" ? " ⚠" : ""}
+							{t.kind === "error" && (
+								<>
+									{" ⚠"}
+									<span className="sr-only">: {t.message}</span>
+								</>
+							)}
 						</span>
 					))}
 				</div>
 			)}
 
 			<p className="text-xs text-muted-foreground">
-				{matchCount} of {total} session{total === 1 ? "" : "s"} · keys{" "}
-				<span className="font-mono">color char audio shape anim pos</span>{" "}
-				(values or <span className="font-mono">*</span>),{" "}
-				<span className="font-mono">n time fb match</span>{" "}
-				(<span className="font-mono">{">"} {">="} {"<"} {"<="} =</span> or{" "}
-				<span className="font-mono">a..b</span>)
+				<span role="status" aria-live="polite">
+					{matchCount} of {total} session{total === 1 ? "" : "s"}
+				</span>{" "}
+				·{" "}
+				<span id={syntaxId}>
+					keys{" "}
+					<span className="font-mono">color char audio shape anim pos</span>{" "}
+					(values or <span className="font-mono">*</span>),{" "}
+					<span className="font-mono">n time fb match</span>{" "}
+					(<span className="font-mono">{">"} {">="} {"<"} {"<="} =</span> or{" "}
+					<span className="font-mono">a..b</span>)
+				</span>
 			</p>
 		</div>
 	);

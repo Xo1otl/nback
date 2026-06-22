@@ -1,4 +1,4 @@
-/** Presentation metadata for modalities; `game` owns canonical IDs/options. */
+/** Presentation metadata for modalities; canonical IDs/options in `game`. */
 
 import type { ComponentType } from "react";
 import {

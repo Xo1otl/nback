@@ -1,16 +1,4 @@
-/**
- * The session driver factory. A closure over the live mutable runtime state
- * (current {@link game.SessionState}, the event log, timers); the pure game
- * reducers do all the logic, the driver only supplies time and inputs.
- *
- * Auto-advance: on `start` it arms a responding-phase timer; when it fires it
- * calls `closeTrial` and arms a feedback-phase timer; when that fires it calls
- * `nextTrial`, then either arms the next responding timer or finishes.
- *
- * The full event log is retained verbatim — every `respond` (accepted,
- * ignored, or rejected) is appended, so behavioral analyses (RT, hesitation,
- * repeated toggles, late taps) can read the raw trace later.
- */
+/** Session driver factory. INVARIANT: full event log retained verbatim (every respond, incl. ignored/rejected) → behavioral analysis reads raw trace. */
 
 import * as game from "@/game";
 import type {
@@ -33,8 +21,8 @@ export function createDriver(
 
 	let state = initial;
 	let status: SessionStatus = "idle";
-	let origin: game.Milliseconds = 0; // monotonic; private, drives event offsets
-	let createdAt: game.Timestamp = 0; // wall-clock at start; persisted on the record
+	let origin: game.Milliseconds = 0; // monotonic; drives event offsets
+	let createdAt: game.Timestamp = 0; // wall-clock; persisted on record
 	const events: game.Event[] = [];
 
 	let cancelTimer: (() => void) | undefined;
@@ -91,9 +79,11 @@ export function createDriver(
 	function respondCmd(mod: game.ModID, action: game.ResponseAction): void {
 		if (status !== "running") return;
 		const responded = game.respond(spec, state, mod, action, offset());
-		state = responded.state;
-		events.push(responded.event); // keep the full trace, incl. ignored/rejected
-		emit();
+		events.push(responded.event); // full trace incl. ignored/rejected
+		if (responded.event.result === game.RESULT_ACCEPTED) {
+			state = responded.state;
+			emit(); // INVARIANT: snapshot ref stable → emit only on state change
+		}
 	}
 
 	function buildFeedback(): ModFeedback[] {

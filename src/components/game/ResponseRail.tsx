@@ -1,8 +1,4 @@
-/**
- * The bottom rail of response pads — one per ENABLED modality, in canonical
- * `ALL_MODS` order so muscle memory is stable. Engaged state and per-mod
- * feedback outcome are read straight off the snapshot.
- */
+/** Response pads, one per enabled mod. INVARIANT: canonical ALL_MODS order (stable muscle memory). */
 
 import type * as driver from "@/driver";
 import * as game from "@/game";
@@ -20,10 +16,7 @@ export function ResponseRail({
 	locked: boolean;
 	onToggle: (mod: game.ModID) => void;
 }) {
-	// A centered, wrapping row of channel pads: exactly 3 per row on phones (a
-	// balanced 3×2 for six channels), a single centered row on larger screens.
-	// `justify-center` centers partial rows (e.g. 3 enabled mods on desktop);
-	// `max-w-2xl` + the per-pad width cap keep the row within the viewport.
+	// 3-per-row on phones (6 → 3×2); single centered row on ≥sm.
 	return (
 		<div className="mx-auto flex w-full max-w-2xl flex-wrap justify-center gap-2">
 			{mods.map((mod) => {

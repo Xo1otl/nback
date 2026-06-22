@@ -37,7 +37,7 @@ export function HistoryScreen({
 }: {
 	onBack: () => void;
 	onSelect: (record: game.SessionRecord) => void;
-	/** Lifted to `App` and persisted, so it survives leaving/reopening + reload. */
+	/** Owned + persisted by App; survives reload. */
 	query: string;
 	onQueryChange: (query: string) => void;
 }) {
@@ -53,15 +53,12 @@ export function HistoryScreen({
 	}, [reload]);
 
 	const tokens = useMemo(() => analysis.parseQuery(query), [query]);
-	// Oldest-first (chronological) for the trend; newest-first for the list.
-	// Protocol filter (domain) then time window (UI); both narrow the whole view.
+	// trend reads matching as-is (chronological); list reverses for newest-first
 	const matching = all.filter(
 		(p) =>
 			analysis.matchesQuery(p.record.spec, tokens) &&
 			withinPeriod(p.record.createdAt, period, now),
 	);
-	// A search/period filter is narrowing the view iff fewer sessions match than exist.
-	// "Clear" removes exactly what's shown, so its copy follows the same split.
 	const filtered = matching.length < all.length;
 	const clearCopy = filtered
 		? {
@@ -77,7 +74,7 @@ export function HistoryScreen({
 	const finite = matching
 		.map((p) => p.dp)
 		.filter((d): d is number => d != null && Number.isFinite(d));
-	// latest = most recent FINITE d′; headline/delta/trend-dot must share it
+	// INVARIANT: headline/delta/trend-dot share most-recent FINITE d′
 	const latestDp = finite.length ? finite[finite.length - 1]! : null;
 	const deltaDp =
 		finite.length >= 2
@@ -118,8 +115,7 @@ export function HistoryScreen({
 													storage.deleteSessions(
 														matching.map((p) => p.record.id),
 													);
-													// Clearing the whole list also resets the saved query;
-													// a filtered clear leaves the search in place.
+													// full clear resets query; filtered clear keeps it
 													if (!filtered) onQueryChange("");
 													setReload((x) => x + 1);
 												}}

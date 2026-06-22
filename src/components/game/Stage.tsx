@@ -1,10 +1,4 @@
-/**
- * The focal Stage: an aspect-square card that renders the position lattice and
- * the composite stimulus in the correct cell. Pure projection of the snapshot —
- * it shows the live stimulus only while `running`; in `ready` it shows a
- * neutral preview token (the real trial-0 stimulus must not leak), and during
- * `feedback` it de-emphasizes the just-seen stimulus.
- */
+/** Focal Stage: position lattice + composite stimulus in active cell. HAZARD: show live stimulus only while running; idle shows neutral token, never the real trial-0 stimulus (leak). */
 
 import { Volume2 } from "lucide-react";
 
@@ -67,7 +61,6 @@ export function Stage({
 				memorize && "border-dashed border-muted-foreground/40",
 			)}
 		>
-			{/* Neutral preview token before the session starts. */}
 			{status === "idle" && (
 				<div className="pointer-events-none absolute inset-0 flex items-center justify-center">
 					<div className="size-24 rounded-2xl border border-dashed border-border bg-muted/30" />

@@ -51,7 +51,7 @@ function audioContext(): AudioContext | null {
 	return ctx;
 }
 
-/** Fetch + decode every clip into `buffers` (decode works on a suspended ctx). */
+/** Fetch + decode every clip into `buffers` (decode works on suspended ctx). */
 async function decodeAll(context: AudioContext): Promise<void> {
 	await Promise.all(
 		Object.entries(SOUND_URL).map(async ([letter, url]) => {

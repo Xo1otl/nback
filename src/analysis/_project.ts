@@ -1,22 +1,7 @@
 /**
- * Projections over a `game.SessionRecord` (§intro, §Scoring).
- *
- * Events are a flat, append-only log with no trial index; trial boundaries are
- * recovered by counting `trialAdvanced` events (the session starts in trial 0,
- * and each `trialAdvanced` moves to the next trial). A trial is *scored* only if
- * it is past the memorization phase AND actually reached feedback (a
- * `trialClosed` was logged for it) — so an aborted or otherwise incomplete
- * session scores only the trials the player truly completed, never the
- * pre-generated trials they never saw.
- *
- * For each scored trial and enabled modality the judgment is determined by:
- *
- *   - match:        stimulus[m][t] == stimulus[m][t - N]   (game.matchAt)
- *   - final state:  the last accepted `respond` action for the mod in trial t,
- *                   defaulting to disengage                (game.finalEngagedFrom)
- *
- * Both the match rule and the response fold live in `game` and are shared with
- * the driver's live feedback, so the live and post-hoc judgments cannot drift.
+ * Projections over a `game.SessionRecord` (§Scoring).
+ * INVARIANT: match (game.matchAt) + final-state fold (game.finalEngagedFrom)
+ * live in `game`, shared w/ driver live feedback → live & post-hoc cannot drift.
  */
 
 import * as game from "@/game";
@@ -51,7 +36,7 @@ function segmentEvents(events: readonly game.Event[]): Segmented {
 				byTrial.set(trial, [ev]);
 			}
 		} else if (ev.type === "trialClosed") {
-			// responding(t) -> feedback(t): trial t completed (does NOT advance t).
+			// trialClosed does NOT advance t
 			closedTrials.add(trial);
 		} else if (ev.type === "trialAdvanced") {
 			trial++;
@@ -66,9 +51,7 @@ function judgeTrial(
 	t: game.TrialIndex,
 ): TrialFeedback | undefined {
 	const spec = record.spec;
-	// Score only trials past memorization that actually reached feedback. An
-	// unreached trial (aborted/incomplete session) must NOT be fabricated as an
-	// all-disengaged Miss/CorrectReject.
+	// HAZARD: unreached trial must NOT be fabricated as all-disengaged Miss/CR
 	if (!game.isScoredTrial(spec, t) || !seg.closedTrials.has(t)) {
 		return undefined;
 	}
@@ -109,9 +92,7 @@ export function reconstructTrials(
 
 /**
  * Aggregate judgments into per-modality counts + SDT, in spec order (§Scoring).
- * `q` defaults to {@link standardNormalQuantile}. For an incomplete session only
- * completed trials are counted, so H + M + F + C <= problemCount — and equals it
- * exactly once the session has run to completion.
+ * `q` defaults to {@link standardNormalQuantile}. Incomplete session ⇒ H+M+F+C ≤ problemCount.
  */
 export function projectSessionScore(
 	record: game.SessionRecord,

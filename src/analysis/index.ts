@@ -1,11 +1,5 @@
-/**
- * `analysis` — pure projections over a `game.SessionRecord`.
- *
- * Port of `contract-go/analysis`. Depends on `game`, never the reverse.
- * Import as a namespace: `import * as analysis from "@/analysis"`.
- */
+/** `analysis` — pure projections over a `game.SessionRecord`. */
 
-// ---- Outcome vocabulary (defined in `game`; re-exported here for convenience) ----
 export {
 	type Outcome,
 	OUTCOME_HIT,

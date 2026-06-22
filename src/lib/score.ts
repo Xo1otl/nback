@@ -35,16 +35,12 @@ export type SensitivityBand = {
 };
 
 /**
- * Map a d′ value to a plain-language band so the number is interpretable
- * without knowing signal-detection theory. Roughly: 0 ≈ guessing, ~1 = a real
- * but shaky signal, 2–3 = strong, 4+ = near-ceiling. `null` for absent/∞.
+ * d′ → qualitative band. `null` for absent/∞.
  */
 export function sensitivityBand(
 	d: number | null | undefined,
 ): SensitivityBand | null {
 	if (d == null || !Number.isFinite(d)) return null;
-	// Paired light (`-700`) / dark (`dark:-300`) shades so the band reads on
-	// both themes; "Guessing" stays on the theme-aware muted token.
 	if (d < 0.5) return { label: "Guessing", tone: "text-muted-foreground" };
 	if (d < 1.5)
 		return { label: "Developing", tone: "text-amber-700 dark:text-amber-300" };
@@ -55,8 +51,7 @@ export function sensitivityBand(
 	return { label: "Elite", tone: "text-emerald-700 dark:text-emerald-300" };
 }
 
-/** Whether a band is the top ("Elite") tier. Keeps the label string confined to
- * this module so callers test the tier, not a display word. */
+/** Whether a band is the top ("Elite") tier. */
 export function isTopBand(band: SensitivityBand | null): boolean {
 	return band?.label === "Elite";
 }

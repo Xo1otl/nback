@@ -1,9 +1,5 @@
-/**
- * React binding for the theme model (`lib/theme.ts`): a module-level store read
- * via `useSyncExternalStore`. `setThemeMode` writes DOM + localStorage and
- * notifies subscribers; in `"system"` mode the store also tracks live OS
- * `prefers-color-scheme` changes.
- */
+// useSyncExternalStore binding over a module-level store for lib/theme.
+// system mode also tracks live OS prefers-color-scheme.
 
 import { useSyncExternalStore } from "react";
 
@@ -21,8 +17,7 @@ function darkMediaQuery(): MediaQueryList | null {
 function subscribe(listener: () => void): () => void {
 	listeners.add(listener);
 	const mq = darkMediaQuery();
-	// In "system" mode the resolved theme tracks the OS — reapply + re-render
-	// when it flips. (Inert for explicit light/dark: the snapshot is fixed.)
+	// system mode: reapply + re-render on OS flip
 	const onSystemChange = () => {
 		if (mode === "system") {
 			theme.applyResolvedTheme(theme.resolveTheme(mode));
@@ -36,9 +31,7 @@ function subscribe(listener: () => void): () => void {
 	};
 }
 
-// A value-equal snapshot (a string, compared by Object.is) used only for React's
-// change detection: it folds in the resolved theme so an OS flip in "system"
-// mode — which leaves `mode` unchanged — still re-renders subscribers.
+// INVARIANT: snapshot folds in resolved theme so system-mode OS flip (mode unchanged) still re-renders.
 function getSnapshot(): string {
 	return mode === "system" ? `system:${theme.resolveTheme(mode)}` : mode;
 }

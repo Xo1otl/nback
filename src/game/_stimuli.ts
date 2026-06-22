@@ -43,7 +43,7 @@ export function generateStimuli(
 				if (rng.float64() < spec.matchProbability) {
 					value = prev;
 				} else {
-					// Uniform over O_m \ {prev}; options are unique, so exactly k-1.
+					// INVARIANT: options unique (k>=2) → pool non-empty.
 					const pool = opts.filter((o) => o !== prev);
 					value = pool[rng.intn(pool.length)]!;
 				}

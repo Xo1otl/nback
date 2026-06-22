@@ -92,6 +92,12 @@ describe("matchesQuery — scalars", () => {
 		expect(match("match:>40", s)).toBe(false);
 	});
 
+	test("empty-endpoint ranges are errors, not silent filters", () => {
+		expect(analysis.parseQuery("n:..5")[0]?.kind).toBe("error");
+		expect(analysis.parseQuery("n:5..")[0]?.kind).toBe("error");
+		expect(match("n:5..", s)).toBe(true); // error ignored, not range [5,0] (never)
+	});
+
 	test("error tokens are ignored, valid ones still apply", () => {
 		expect(match("n:3 bogus:x", s)).toBe(true);
 		expect(match("n:2 bogus:x", s)).toBe(false);

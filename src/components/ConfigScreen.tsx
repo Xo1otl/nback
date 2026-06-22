@@ -28,7 +28,6 @@ import {
 import { matchPctOf, matchProbabilityFromPct } from "@/lib/sessionConfig";
 import { cn } from "@/lib/utils";
 
-/** A labeled integer stepper with −/+ and a number input. */
 function NumberField({
 	label,
 	value,
@@ -58,6 +57,7 @@ function NumberField({
 				</Button>
 				<Input
 					type="number"
+					aria-label={label}
 					className="w-16 text-center"
 					min={min}
 					max={max}
@@ -81,7 +81,6 @@ function NumberField({
 	);
 }
 
-/** A labeled range slider with a formatted value readout. */
 function SliderField({
 	label,
 	value,
@@ -109,6 +108,7 @@ function SliderField({
 			</div>
 			<input
 				type="range"
+				aria-label={label}
 				className="h-2 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-primary"
 				min={min}
 				max={max}
@@ -120,8 +120,7 @@ function SliderField({
 	);
 }
 
-/** Initial per-mod option subset: the `initial` config's options, else the full
- * canonical set. Position is driven by a shape picker instead, so it's omitted. */
+/** Per-mod option subset from `initial`, else canonical; position omitted → driven by shape picker. */
 function initialModOptions(
 	initial: game.SessionConfig,
 ): Record<game.ModID, ReadonlySet<game.Option>> {
@@ -142,16 +141,12 @@ function initialShapeId(initial: game.SessionConfig): string {
 	);
 }
 
-/** Screen 2 — a settings editor for the next session (N, mods + their option
- * pools, timing). Not a launch point: Back commits the edited config upward
- * (the next Play uses it); there is no separate start action. */
+/** Settings editor for next session (N, mods + option pools, timing). INVARIANT: no start action; Back commits edited config upward. */
 export function ConfigScreen({
 	initial,
 	onBack,
 }: {
-	/** Pre-fills the form (the current/last-used config). */
 	initial: game.SessionConfig;
-	/** Commit the edited settings and leave the screen. */
 	onBack: (config: game.SessionConfig) => void;
 }) {
 	const [n, setN] = useState(initial.n);
@@ -195,8 +190,7 @@ export function ConfigScreen({
 		});
 	}
 
-	/** Build a mod's resolved options: position from the shape, others from the
-	 * picked subset (in canonical order so generation is order-stable). */
+	/** Resolve mod options: position from shape; others = picked subset in canonical order (INVARIANT: generation order-stable). */
 	function optionsFor(id: game.ModID): game.OptionList {
 		if (id === game.MOD_POSITION) {
 			const shape =
@@ -207,9 +201,7 @@ export function ConfigScreen({
 		return (game.CANONICAL_OPTIONS[id] ?? []).filter((o) => chosen.has(o));
 	}
 
-	/** Project the form state into a `SessionConfig`. Always valid by
-	 * construction: every field is clamped to a legal range, each modality keeps
-	 * >= 2 options, and at least one modality stays enabled. */
+	/** Project form state → SessionConfig (valid by construction; see clamps + min-option/>=1-mod guards). */
 	function buildConfig(): game.SessionConfig {
 		return {
 			n,
@@ -301,7 +293,6 @@ export function ConfigScreen({
 							{ALL_MODS.map((id) => {
 								const meta = modMeta(id);
 								const on = selected.has(id);
-								// The last enabled modality can't be turned off (>= 1 required).
 								const locked = on && selected.size <= 1;
 								return (
 									<button
@@ -329,6 +320,9 @@ export function ConfigScreen({
 										<span className="text-xs text-muted-foreground">
 											{meta.description}
 										</span>
+										{locked && (
+											<span className="sr-only">Keep at least one modality</span>
+										)}
 									</button>
 								);
 							})}

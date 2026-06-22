@@ -5,9 +5,7 @@
  * `offset` (ms from Origin) and threads the returned {@link SessionState}.
  * The emitted events are the append-only log stored in a `SessionRecord`.
  *
- * Transition events ({@link closeTrial}, {@link nextTrial}) are total: calling
- * them out of phase returns the event with the state unchanged (a no-op),
- * never an error — drivers decide whether to append a no-op event.
+ * INVARIANT: transitions ({@link closeTrial}, {@link nextTrial}) are total — out-of-phase returns event with state unchanged (no-op), never throws.
  */
 
 import { generateStimuli } from "./_stimuli";
@@ -61,18 +59,7 @@ export type RespondResult = {
 };
 
 /**
- * Validate a response against spec + state and produce the {@link Responded}
- * event plus the next state (§Events). Responding never changes phase/trial,
- * but an *accepted* response is folded into `state.responses` (last accepted
- * action per mod wins) so live feedback is a pure function of (state, stimuli)
- * — drivers never replay the log. Non-accepted responses leave state
- * unchanged. The full event log remains the SSOT for `analysis`. Result/reason:
- *
- *  - not in responding phase -> ignored / notResponding
- *  - memorization trial (t < N) -> ignored / memoTrial
- *  - modality not enabled -> rejected / modNotEnabled
- *  - offset outside [onset, onset + respondingDuration] -> rejected / outsideWindow
- *  - otherwise -> accepted / none
+ * Validate response → {@link Responded} event + next state (§Events). Accepted response folds into state.responses (last accepted per mod wins); non-accepted leaves state unchanged. Result/reason precedence: phase → scored → mod → window (see classifyResponse).
  */
 export function respond(
 	spec: SessionSpec,

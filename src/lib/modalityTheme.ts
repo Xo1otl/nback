@@ -26,8 +26,7 @@ export function fillFor(color: string | undefined): string {
 
 /** Auto-contrast glyph color for the character drawn over a given fill. */
 export function glyphFill(color: string | undefined): string {
-	// Green and the muted (color-disabled) fill are light → dark ink; the
-	// saturated fills (red / purple / blue) are darker → light ink.
+	// green/muted fills are light → dark ink; saturated → light ink
 	if (color === undefined || color === game.COLOR_GREEN) return GLYPH_DARK;
 	return GLYPH_LIGHT;
 }
@@ -38,8 +37,6 @@ export function glyphHalo(color: string | undefined): string {
 		? "oklch(1 0 0 / 0.55)"
 		: "oklch(0 0 0 / 0.5)";
 }
-
-// ---- Shapes ----------------------------------------------------------------
 
 export type ShapeKind = "triangle" | "square" | "pentagon" | "ellipse" | "token";
 
@@ -54,12 +51,10 @@ export function shapeKind(shape: string | undefined): ShapeKind {
 		case game.SHAPE_ELLIPSE:
 			return "ellipse";
 		default:
-			// shape disabled → neutral carrier for other channels
+			// shape disabled → neutral carrier
 			return "token";
 	}
 }
-
-// ---- Animation -------------------------------------------------------------
 
 export function animationClass(anim: string | undefined): string {
 	switch (anim) {
@@ -76,7 +71,7 @@ export function animationClass(anim: string | undefined): string {
 	}
 }
 
-// ---- Outcome skins (feedback phase, on the pads only) ----------------------
+// outcome skins; feedback phase, pads only
 
 export type OutcomeSkin = {
 	readonly word: string;
@@ -84,7 +79,6 @@ export type OutcomeSkin = {
 	readonly Icon: ComponentType<{ className?: string }>;
 };
 
-// Literal keys (not OUTCOME_* consts, typed as full union) to satisfy Record<Outcome,_>.
 const SKINS: Record<game.Outcome, OutcomeSkin> = {
 	H: {
 		word: "Hit",
@@ -116,7 +110,7 @@ export function outcomeSkin(o: game.Outcome): OutcomeSkin {
 	return SKINS[o];
 }
 
-// Stable per-modality keys (subset-independent). character=h (cHaracter), animation=m (Motion).
+// INVARIANT: keys stable across mod subset. character=h (cHaracter); animation=m (Motion)
 
 export const KEY_FOR_MOD: Record<string, string> = {
 	[game.MOD_POSITION]: "p",
@@ -131,8 +125,6 @@ export const KEY_FOR_MOD: Record<string, string> = {
 export const MOD_FOR_KEY: Record<string, game.ModID> = Object.fromEntries(
 	Object.entries(KEY_FOR_MOD).map(([mod, key]) => [key, mod]),
 );
-
-// ---- Position geometry -----------------------------------------------------
 
 const POS_RE = /^r(\d+)c(\d+)$/;
 

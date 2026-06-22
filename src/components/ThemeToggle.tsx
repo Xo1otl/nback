@@ -1,8 +1,4 @@
-/**
- * A single light/dark switch. Shows the icon of the theme you'd switch *to*
- * (a Sun when currently dark, a Moon when currently light) and flips the
- * resolved theme on click — see `useTheme`.
- */
+/** Light/dark switch; shows the icon of the theme you'd switch to. */
 
 import { Moon, Sun } from "lucide-react";
 

@@ -63,7 +63,6 @@ export {
 	isScoredTrial,
 	specMod,
 	trialStimulusValue,
-	sameStimulus,
 	responseFor,
 	isEngaged,
 	engagedIn,

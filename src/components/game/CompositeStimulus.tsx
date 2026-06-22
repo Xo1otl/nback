@@ -1,9 +1,4 @@
-/**
- * The single composite stimulus: ONE SVG node that simultaneously carries the
- * shape, color (fill + parity outline), character (auto-contrast glyph) and
- * animation channels. Position is handled by the parent (which cell it lands
- * in); audio is never drawn. A pure function of the trial's `stimulus.values`.
- */
+/** One SVG carrying shape/color/character/animation channels; position handled by parent, audio never drawn. */
 
 import * as game from "@/game";
 import { ShapeBody } from "@/components/ShapeBody";

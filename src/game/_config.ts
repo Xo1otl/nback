@@ -1,7 +1,4 @@
-/**
- * Convenience factory for the standard six-modality configuration
- * (port of Go's `DefaultMultiplexConfig`), with a 3x3 position grid.
- */
+/** Factory: standard six-modality config with a 3x3 position grid. */
 
 import {
 	CANONICAL_ANIMATION,
