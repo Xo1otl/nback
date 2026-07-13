@@ -14,6 +14,7 @@ export function EndCard({
 	aborted,
 	n,
 	total,
+	played,
 	notSaved,
 	onViewResults,
 	onHome,
@@ -21,6 +22,8 @@ export function EndCard({
 	aborted: boolean;
 	n: number;
 	total: number;
+	/** Actual trials closed so far; only shown when `aborted`. */
+	played: number;
 	notSaved: "quota" | "unavailable" | null;
 	onViewResults: () => void;
 	onHome: () => void;
@@ -43,7 +46,8 @@ export function EndCard({
 						{aborted ? "Session ended early" : "Session complete"}
 					</CardTitle>
 					<CardDescription>
-						{total} trials · {n}-back
+						{aborted ? `${played} of ${total} trials` : `${total} trials`} ·{" "}
+						{n}-back
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-col gap-3">

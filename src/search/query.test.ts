@@ -23,8 +23,34 @@ function spec(
 	};
 }
 
-const match = (q: string, s: game.SessionSpec) =>
-	search.matchesQuery(s, search.parseQuery(q));
+/** bare structural SessionRecord wrapping a spec; only query-read fields matter */
+function record(
+	spec: game.SessionSpec,
+	events: readonly game.Event[] = [],
+): game.SessionRecord {
+	return {
+		version: game.SESSION_RECORD_VERSION,
+		id: "test",
+		spec,
+		seed: "seed",
+		stimuli: [],
+		createdAt: 0,
+		events,
+	};
+}
+
+/** `count` fully-closed trials, trial 0..count-1 (§Events: trialClosed then trialAdvanced). */
+function closedTrialEvents(count: number): game.Event[] {
+	const events: game.Event[] = [];
+	for (let i = 0; i < count; i++) {
+		events.push({ type: "trialClosed", offset: i * 1000 });
+		events.push({ type: "trialAdvanced", offset: i * 1000 + 10 });
+	}
+	return events;
+}
+
+const match = (q: string, s: game.SessionSpec, events: readonly game.Event[] = []) =>
+	search.matchesQuery(record(s, events), search.parseQuery(q));
 
 describe("parseQuery", () => {
 	test("flags malformed tokens but keeps valid ones", () => {
@@ -101,6 +127,39 @@ describe("matchesQuery — scalars", () => {
 	test("error tokens are ignored, valid ones still apply", () => {
 		expect(match("n:3 bogus:x", s)).toBe(true);
 		expect(match("n:2 bogus:x", s)).toBe(false);
+	});
+});
+
+describe("matchesQuery — played/done", () => {
+	// n:3, total = 3 + 5 = 8; scored trials are t=3..7
+	const s = spec(3, [{ mod: game.MOD_COLOR, opts: ["red", "green"] }], {
+		problemCount: 5,
+	});
+
+	test("played counts actual closed scored trials, not the configured problemCount", () => {
+		const partial = closedTrialEvents(6); // trials 0..5 closed → scored {3,4,5} played
+		expect(match("played:3", s, partial)).toBe(true);
+		expect(match("played:5", s, partial)).toBe(false);
+		expect(match("played:<5", s, partial)).toBe(true);
+	});
+
+	test("done reflects whether every configured trial closed", () => {
+		const partial = closedTrialEvents(6);
+		const full = closedTrialEvents(8); // trials 0..7 closed → all 8 configured trials
+		expect(match("done:n", s, partial)).toBe(true);
+		expect(match("done:y", s, partial)).toBe(false);
+		expect(match("done:y", s, full)).toBe(true);
+		expect(match("played:5", s, full)).toBe(true);
+	});
+
+	test("no events ⇒ nothing played, not done", () => {
+		expect(match("played:0", s)).toBe(true);
+		expect(match("done:n", s)).toBe(true);
+	});
+
+	test("bad bool value is an error, not a silent filter", () => {
+		expect(search.parseQuery("done:maybe")[0]?.kind).toBe("error");
+		expect(match("done:maybe", s)).toBe(true); // error ignored
 	});
 });
 

@@ -11,7 +11,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import type * as game from "@/game";
+import * as game from "@/game";
 import { modMeta, sortedModIds } from "@/lib/modalities";
 import { fmtDPrime } from "@/lib/score";
 
@@ -28,6 +28,7 @@ export function SessionRow({
 	const spec = scored.record.spec;
 	const mods = sortedModIds(spec);
 	const when = new Date(scored.record.createdAt).toLocaleString();
+	const complete = game.isComplete(scored.record);
 	return (
 		<div className="flex items-stretch overflow-hidden rounded-lg border bg-card">
 			<button
@@ -50,7 +51,10 @@ export function SessionRow({
 							);
 						})}
 					</div>
-					<div className="truncate text-xs text-muted-foreground">{when}</div>
+					<div className="truncate text-xs text-muted-foreground">
+						{when}
+						{!complete && " · ended early"}
+					</div>
 				</div>
 				<div className="shrink-0 text-sm font-semibold tabular-nums">
 					{fmtDPrime(scored.dp)}

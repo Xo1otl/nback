@@ -19,12 +19,11 @@ type Segmented = {
 	/** `responded` events (accepted or not) by trial. */
 	readonly byTrial: Map<game.TrialIndex, game.Responded[]>;
 	/** trials that reached feedback (`trialClosed` logged). */
-	readonly closedTrials: Set<game.TrialIndex>;
+	readonly closedTrials: ReadonlySet<game.TrialIndex>;
 };
 
 function segmentEvents(events: readonly game.Event[]): Segmented {
 	const byTrial = new Map<game.TrialIndex, game.Responded[]>();
-	const closedTrials = new Set<game.TrialIndex>();
 	let trial = 0;
 	for (const ev of events) {
 		if (ev.type === "responded") {
@@ -34,14 +33,11 @@ function segmentEvents(events: readonly game.Event[]): Segmented {
 			} else {
 				byTrial.set(trial, [ev]);
 			}
-		} else if (ev.type === "trialClosed") {
-			// trialClosed does NOT advance t
-			closedTrials.add(trial);
 		} else if (ev.type === "trialAdvanced") {
 			trial++;
 		}
 	}
-	return { byTrial, closedTrials };
+	return { byTrial, closedTrials: game.closedTrials(events) };
 }
 
 function judgeTrial(

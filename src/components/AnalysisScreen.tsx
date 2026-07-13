@@ -3,7 +3,7 @@ import { Check, Copy, Home, History, RotateCcw } from "lucide-react";
 
 import * as analysis from "@/analysis";
 import * as search from "@/search";
-import type * as game from "@/game";
+import * as game from "@/game";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -67,17 +67,22 @@ export function AnalysisScreen({
 	const acc = overallAccuracy(score);
 	// log-linear d′ ceiling rises with scored-trial count; 100% acc can still cap below top band
 	const cappedFlawless = acc === 1 && !isTopBand(band);
+	const complete = game.isComplete(record);
+	const played = game.playedProblemCount(record);
 
 	return (
 		<Shell>
 			<div className="flex w-full max-w-2xl flex-col gap-5">
 				<div className="flex flex-col gap-1 text-center">
 					<h1 className="text-2xl font-semibold tracking-tight">
-						Session complete
+						{complete ? "Session complete" : "Session ended early"}
 					</h1>
 					<p className="text-sm text-muted-foreground">
-						{record.spec.n}-back · {record.spec.problemCount} scored trials ·{" "}
-						{record.spec.mods.length} modalities
+						{record.spec.n}-back ·{" "}
+						{complete
+							? `${record.spec.problemCount} scored trials`
+							: `${played} of ${record.spec.problemCount} scored trials`}{" "}
+						· {record.spec.mods.length} modalities
 					</p>
 					<div className="mt-1 flex justify-center">
 						<CopyQueryButton query={search.queryForSpec(record.spec)} />

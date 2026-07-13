@@ -1,4 +1,4 @@
-/** Token search over `game.SessionSpec`; History search-box grammar. */
+/** Token search over `game.SessionRecord`; History search-box grammar. */
 
 export {
 	type Token,

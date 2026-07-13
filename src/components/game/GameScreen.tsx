@@ -102,6 +102,9 @@ function GameView({
 	const responding = status === "running" && phase === "responding";
 	const interactive = responding && scored;
 	const terminal = status === "done" || status === "aborted";
+	const played = terminal
+		? game.closedTrials(sessionDriver.record()?.events ?? []).size
+		: 0;
 
 	function toggle(mod: game.ModID) {
 		if (!interactive) return;
@@ -237,6 +240,7 @@ function GameView({
 						aborted={status === "aborted"}
 						n={n}
 						total={total}
+						played={played}
 						notSaved={notSaved}
 						onViewResults={viewResults}
 						onHome={onHome}

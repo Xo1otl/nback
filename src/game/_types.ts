@@ -266,6 +266,36 @@ export function finalEngagedFrom(
 	return engaged;
 }
 
+/** Trials that reached feedback (`trialClosed` logged), replayed from the event log. SYNC: analysis's segmentation must agree. */
+export function closedTrials(events: readonly Event[]): ReadonlySet<TrialIndex> {
+	const closed = new Set<TrialIndex>();
+	let trial = 0;
+	for (const ev of events) {
+		if (ev.type === "trialClosed") {
+			closed.add(trial);
+		} else if (ev.type === "trialAdvanced") {
+			trial++;
+		}
+	}
+	return closed;
+}
+
+/** Actual scored trials played, vs. configured {@link SessionSpec.problemCount}. */
+export function playedProblemCount(record: SessionRecord): number {
+	let count = 0;
+	for (const t of closedTrials(record.events)) {
+		if (isScoredTrial(record.spec, t)) {
+			count++;
+		}
+	}
+	return count;
+}
+
+/** All configured trials closed; false ⇒ aborted early. No persisted status field — derived from the event log (SSOT). */
+export function isComplete(record: SessionRecord): boolean {
+	return closedTrials(record.events).size >= totalTrials(record.spec);
+}
+
 export const MOD_POSITION: ModID = "position";
 export const MOD_COLOR: ModID = "color";
 export const MOD_CHARACTER: ModID = "character";

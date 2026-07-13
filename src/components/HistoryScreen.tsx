@@ -56,7 +56,7 @@ export function HistoryScreen({
 	// trend reads matching as-is (chronological); list reverses for newest-first
 	const matching = all.filter(
 		(p) =>
-			search.matchesQuery(p.record.spec, tokens) &&
+			search.matchesQuery(p.record, tokens) &&
 			withinPeriod(p.record.createdAt, period, now),
 	);
 	const filtered = matching.length < all.length;

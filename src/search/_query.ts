@@ -1,12 +1,15 @@
 /**
- * Token search over `SessionSpec`. Whitespace-separated `key:value`, AND-combined.
+ * Token search over `SessionRecord`. Whitespace-separated `key:value`, AND-combined.
  *   - modality keys (pos/color/char/shape/audio/anim): mentioned keys = EXACT
  *     enabled set (unmentioned ⇒ OFF), but only if ≥1 modality token present
  *     (scalar-only query leaves set unconstrained); value list ⇒ options ⊇ {…};
  *     `*` ⇒ enabled, any options. Cross-modal overlap via composition, e.g.
  *     `char:A audio:A`.
  *   - scalar keys — `n`, `time` (responding ms), `fb` (feedback ms), `match`
- *     (% rate). Each `=`(default)/`>`/`>=`/`<`/`<=` + number, or `a..b`.
+ *     (% rate), `played` (actual scored trials reached — {@link game.playedProblemCount}).
+ *     Each `=`(default)/`>`/`>=`/`<`/`<=` + number, or `a..b`.
+ *   - bool key — `done` (`y`/`n`): session ran to configured completion
+ *     ({@link game.isComplete}), vs. ended early.
  */
 
 import * as game from "@/game";
@@ -23,12 +26,18 @@ const KEY_FOR_MOD: Record<string, string> = Object.fromEntries(
 	Object.entries(MOD_KEYS).map(([k, mod]) => [mod, k]),
 );
 
-type ScalarField = "n" | "time" | "fb" | "match";
+type ScalarField = "n" | "time" | "fb" | "match" | "played";
 const SCALAR_FIELDS: Record<string, ScalarField> = {
 	n: "n",
 	time: "time",
 	fb: "fb",
 	match: "match",
+	played: "played",
+};
+
+type BoolField = "done";
+const BOOL_FIELDS: Record<string, BoolField> = {
+	done: "done",
 };
 
 type Op = "=" | ">" | ">=" | "<" | "<=";
@@ -37,6 +46,7 @@ export type Token =
 	| { readonly kind: "mod"; readonly raw: string; readonly mod: game.ModID; readonly values: readonly string[] | null }
 	| { readonly kind: "scalar"; readonly raw: string; readonly field: ScalarField; readonly op: Op; readonly value: number }
 	| { readonly kind: "range"; readonly raw: string; readonly field: ScalarField; readonly lo: number; readonly hi: number }
+	| { readonly kind: "bool"; readonly raw: string; readonly field: BoolField; readonly value: boolean }
 	| { readonly kind: "error"; readonly raw: string; readonly message: string };
 
 function parseToken(raw: string): Token {
@@ -55,6 +65,13 @@ function parseToken(raw: string): Token {
 		if (values.length === 0)
 			return { kind: "error", raw, message: "no value (use * for any)" };
 		return { kind: "mod", raw, mod, values };
+	}
+
+	const boolField = BOOL_FIELDS[key];
+	if (boolField !== undefined) {
+		if (val === "y") return { kind: "bool", raw, field: boolField, value: true };
+		if (val === "n") return { kind: "bool", raw, field: boolField, value: false };
+		return { kind: "error", raw, message: "expected y or n" };
 	}
 
 	const field = SCALAR_FIELDS[key];
@@ -83,17 +100,26 @@ export function parseQuery(q: string): Token[] {
 	return trimmed.split(/\s+/).map(parseToken);
 }
 
-function scalarValue(spec: game.SessionSpec, field: ScalarField): number {
+function scalarValue(record: game.SessionRecord, field: ScalarField): number {
 	switch (field) {
 		case "n":
-			return spec.n;
+			return record.spec.n;
 		case "time":
-			return spec.timing.respondingDuration;
+			return record.spec.timing.respondingDuration;
 		case "fb":
-			return spec.timing.feedbackDuration;
+			return record.spec.timing.feedbackDuration;
 		case "match":
 			// whole-percent (query unit)
-			return Math.round(spec.matchProbability * 100);
+			return Math.round(record.spec.matchProbability * 100);
+		case "played":
+			return game.playedProblemCount(record);
+	}
+}
+
+function boolValue(record: game.SessionRecord, field: BoolField): boolean {
+	switch (field) {
+		case "done":
+			return game.isComplete(record);
 	}
 }
 
@@ -118,7 +144,8 @@ function sameSet(a: readonly game.ModID[], b: readonly game.ModID[]): boolean {
 	return b.every((x) => set.has(x));
 }
 
-export function matchesQuery(spec: game.SessionSpec, tokens: readonly Token[]): boolean {
+export function matchesQuery(record: game.SessionRecord, tokens: readonly Token[]): boolean {
+	const spec = record.spec;
 	const modTokens = tokens.filter(
 		(t): t is Extract<Token, { kind: "mod" }> => t.kind === "mod",
 	);
@@ -135,10 +162,12 @@ export function matchesQuery(spec: game.SessionSpec, tokens: readonly Token[]): 
 	}
 	for (const t of tokens) {
 		if (t.kind === "scalar") {
-			if (!cmp(scalarValue(spec, t.field), t.op, t.value)) return false;
+			if (!cmp(scalarValue(record, t.field), t.op, t.value)) return false;
 		} else if (t.kind === "range") {
-			const v = scalarValue(spec, t.field);
+			const v = scalarValue(record, t.field);
 			if (v < t.lo || v > t.hi) return false;
+		} else if (t.kind === "bool") {
+			if (boolValue(record, t.field) !== t.value) return false;
 		}
 	}
 	return true;

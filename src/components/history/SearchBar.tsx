@@ -86,9 +86,11 @@ export function SearchBar({
 					keys{" "}
 					<span className="font-mono">color char audio shape anim pos</span>{" "}
 					(values or <span className="font-mono">*</span>),{" "}
-					<span className="font-mono">n time fb match</span>{" "}
+					<span className="font-mono">n time fb match played</span>{" "}
 					(<span className="font-mono">{">"} {">="} {"<"} {"<="} =</span> or{" "}
-					<span className="font-mono">a..b</span>)
+					<span className="font-mono">a..b</span>),{" "}
+					<span className="font-mono">done</span>{" "}
+					(<span className="font-mono">y</span>/<span className="font-mono">n</span>)
 				</span>
 			</p>
 		</div>
