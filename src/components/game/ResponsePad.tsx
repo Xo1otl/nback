@@ -12,7 +12,6 @@ export function ResponsePad({
 	locked,
 	outcome,
 	onToggle,
-	className,
 }: {
 	mod: game.ModID;
 	keyHint: string;
@@ -20,7 +19,6 @@ export function ResponsePad({
 	locked: boolean;
 	outcome: game.Outcome | undefined;
 	onToggle: () => void;
-	className?: string;
 }) {
 	const meta = modMeta(mod);
 	const skin = outcome !== undefined ? outcomeSkin(outcome) : null;
@@ -47,7 +45,6 @@ export function ResponsePad({
 						: "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
 				locked && "pointer-events-none",
 				locked && !skin && "opacity-40",
-				className,
 			)}
 		>
 			<span className="absolute left-1.5 top-1.5 hidden rounded border border-border/60 bg-muted px-1 font-mono text-[10px] leading-tight text-muted-foreground sm:block">
