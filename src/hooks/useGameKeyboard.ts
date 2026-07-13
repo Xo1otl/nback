@@ -1,4 +1,3 @@
-// One window keydown for mount lifetime; latest props via render-updated ref.
 // INVARIANT: ref's only reader = this post-commit handler → render-time write safe; do NOT move into effect.
 // SYNC: keys mirror driver guards.
 
@@ -6,18 +5,16 @@ import { useEffect, useRef } from "react";
 
 import type * as driver from "@/driver";
 import type * as game from "@/game";
-import { MOD_FOR_KEY } from "@/lib/modalityTheme";
+import { MOD_FOR_KEY } from "@/lib/modKeys";
 
 export type GameKeyboard = {
 	snapshot: driver.SessionSnapshot;
 	enabledMods: readonly game.ModID[];
-	/** When true (e.g. the quit dialog is open) all game keys are ignored. */
 	paused: boolean;
 	onModToggle: (mod: game.ModID) => void;
 	onStart: () => void;
-	onSeeResults: () => void;
+	onViewResults: () => void;
 	onQuit: () => void;
-	/** Back out of the pre-start (idle) overlay without starting. */
 	onCancel: () => void;
 };
 
@@ -38,7 +35,7 @@ export function useGameKeyboard(handlers: GameKeyboard): void {
 				return;
 			}
 			const h = ref.current;
-			if (h.paused) return; // a modal owns the keyboard
+			if (h.paused) return;
 			const s = h.snapshot;
 			const key = e.key.toLowerCase();
 
@@ -48,10 +45,9 @@ export function useGameKeyboard(handlers: GameKeyboard): void {
 					h.onStart();
 				} else if (s.status === "done" || s.status === "aborted") {
 					e.preventDefault();
-					h.onSeeResults();
+					h.onViewResults();
 				} else if (s.status === "running") {
-					// Swallow bare Space/Enter mid-trial so a focused control isn't
-					// activated (responses use the letter keys).
+					// swallow Space/Enter mid-trial; else focused control activates
 					e.preventDefault();
 				}
 				return;

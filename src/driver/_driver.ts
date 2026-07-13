@@ -1,4 +1,4 @@
-/** Session driver factory. INVARIANT: full event log retained verbatim (every respond, incl. ignored/rejected) → behavioral analysis reads raw trace. */
+/** INVARIANT: full event log retained verbatim (every respond, incl. ignored/rejected) → behavioral analysis reads raw trace. */
 
 import * as game from "@/game";
 import type {
@@ -12,12 +12,15 @@ import type {
 export function createDriver(
 	config: game.SessionConfig,
 	options: DriverOptions,
-): SessionDriver {
+): SessionDriver | game.ConfigError {
 	const { id, seed, deps } = options;
 	const rng = deps.rng ?? game.newRandomSource(seed);
 
-	// Validates config + pre-generates the stimulus trace (throws ConfigError).
-	const { spec, stimuli, state: initial } = game.startSession(config, rng);
+	const started = game.startSession(config, rng);
+	if (started instanceof game.ConfigError) {
+		return started;
+	}
+	const { spec, stimuli, state: initial } = started;
 
 	let state = initial;
 	let status: SessionStatus = "idle";
@@ -79,10 +82,10 @@ export function createDriver(
 	function respondCmd(mod: game.ModID, action: game.ResponseAction): void {
 		if (status !== "running") return;
 		const responded = game.respond(spec, state, mod, action, offset());
-		events.push(responded.event); // full trace incl. ignored/rejected
-		if (responded.event.result === game.RESULT_ACCEPTED) {
+		events.push(responded.event);
+		if (game.resultOf(responded.event.reason) === "accepted") {
 			state = responded.state;
-			emit(); // INVARIANT: snapshot ref stable → emit only on state change
+			emit(); // INVARIANT: emit only on state change → stable snapshot ref
 		}
 	}
 
@@ -90,23 +93,15 @@ export function createDriver(
 		return spec.mods.map((mc) => {
 			const match = game.matchAt(stimuli, spec.n, state.trial, mc.mod) ?? false;
 			const engaged = game.isEngaged(state, mc.mod);
-			const outcome = game.outcomeOf(match, engaged);
-			return {
-				mod: mc.mod,
-				match,
-				engaged,
-				correct: game.outcomeIsCorrect(outcome),
-				outcome,
-			};
+			return { mod: mc.mod, outcome: game.outcomeOf(match, engaged) };
 		});
 	}
 
 	function buildSnapshot(): SessionSnapshot {
 		const scored = game.isScoredTrial(spec, state.trial);
+		// trace indexed by trial (game/_types StimulusTrace); same ref across emits within trial
 		const stimulus =
-			state.phase === "done"
-				? undefined
-				: stimuli.find((s) => s.trial === state.trial);
+			state.phase === "done" ? undefined : stimuli[state.trial];
 		const feedback =
 			state.phase === "feedback" && scored ? buildFeedback() : undefined;
 		return {

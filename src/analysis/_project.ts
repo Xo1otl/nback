@@ -1,5 +1,4 @@
 /**
- * Projections over a `game.SessionRecord` (§Scoring).
  * INVARIANT: match (game.matchAt) + final-state fold (game.finalEngagedFrom)
  * live in `game`, shared w/ driver live feedback → live & post-hoc cannot drift.
  */
@@ -7,6 +6,7 @@
 import * as game from "@/game";
 import { sdtFromCounts, standardNormalQuantile } from "./_sdt";
 import {
+	countsTotal,
 	type ModCounts,
 	type ModJudgment,
 	type ModScore,
@@ -16,13 +16,12 @@ import {
 } from "./_types";
 
 type Segmented = {
-	/** `responded` events (accepted or not) grouped by the trial they occurred in. */
+	/** `responded` events (accepted or not) by trial. */
 	readonly byTrial: Map<game.TrialIndex, game.Responded[]>;
-	/** Trials that reached feedback — i.e. a `trialClosed` was logged for them. */
+	/** trials that reached feedback (`trialClosed` logged). */
 	readonly closedTrials: Set<game.TrialIndex>;
 };
 
-/** Walk the event log once, recovering per-trial buckets and the closed trials. */
 function segmentEvents(events: readonly game.Event[]): Segmented {
 	const byTrial = new Map<game.TrialIndex, game.Responded[]>();
 	const closedTrials = new Set<game.TrialIndex>();
@@ -66,7 +65,6 @@ function judgeTrial(
 	return { trial: t, judgments };
 }
 
-/** Fold the events for trial `t` into per-modality judgments (scored only). */
 export function projectTrialFeedback(
 	record: game.SessionRecord,
 	t: game.TrialIndex,
@@ -74,8 +72,7 @@ export function projectTrialFeedback(
 	return judgeTrial(record, segmentEvents(record.events), t);
 }
 
-/** {@link projectTrialFeedback} across every scored trial, in trial order. */
-export function reconstructTrials(
+export function projectTrialFeedbacks(
 	record: game.SessionRecord,
 ): TrialFeedback[] {
 	const seg = segmentEvents(record.events);
@@ -90,15 +87,12 @@ export function reconstructTrials(
 	return out;
 }
 
-/**
- * Aggregate judgments into per-modality counts + SDT, in spec order (§Scoring).
- * `q` defaults to {@link standardNormalQuantile}. Incomplete session ⇒ H+M+F+C ≤ problemCount.
- */
+/** Per-modality counts + SDT, spec order. Incomplete session ⇒ H+M+F+C ≤ problemCount. §Scoring */
 export function projectSessionScore(
 	record: game.SessionRecord,
 	q: StandardNormalQuantile = standardNormalQuantile,
 ): SessionScore {
-	const trials = reconstructTrials(record);
+	const trials = projectTrialFeedbacks(record);
 
 	type Tally = { h: number; m: number; f: number; c: number };
 	const tallies = new Map<game.ModID, Tally>();
@@ -136,7 +130,10 @@ export function projectSessionScore(
 			f: tally.f,
 			c: tally.c,
 		};
-		return { counts, sdt: sdtFromCounts(counts, q) };
+		// zero observations ⇒ no sdt; log-linear correction is for sparse cells, not absent data
+		return countsTotal(counts) === 0
+			? { counts }
+			: { counts, sdt: sdtFromCounts(counts, q) };
 	});
 
 	return { mods };

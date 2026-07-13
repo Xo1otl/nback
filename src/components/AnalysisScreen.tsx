@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Copy, Home, History, RotateCcw } from "lucide-react";
 
 import * as analysis from "@/analysis";
+import * as search from "@/search";
 import type * as game from "@/game";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,9 +23,12 @@ import {
 } from "@/lib/score";
 import { cn } from "@/lib/utils";
 
-/** Copy session criteria as History query; title=query → fallback when Clipboard API unavailable. */
+// title=query → manual-copy fallback when Clipboard API throws
 function CopyQueryButton({ query }: { query: string }) {
 	const [copied, setCopied] = useState(false);
+	// re-click re-arms one timer; cleared on unmount
+	const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+	useEffect(() => () => clearTimeout(timer.current), []);
 	return (
 		<Button
 			variant="ghost"
@@ -35,7 +39,8 @@ function CopyQueryButton({ query }: { query: string }) {
 				try {
 					await navigator.clipboard.writeText(query);
 					setCopied(true);
-					setTimeout(() => setCopied(false), 1500);
+					clearTimeout(timer.current);
+					timer.current = setTimeout(() => setCopied(false), 1500);
 				} catch {}
 			}}
 		>
@@ -45,7 +50,6 @@ function CopyQueryButton({ query }: { query: string }) {
 	);
 }
 
-/** Screen 4 — single-session score (per-mod SDT). */
 export function AnalysisScreen({
 	record,
 	onPlayAgain,
@@ -76,7 +80,7 @@ export function AnalysisScreen({
 						{record.spec.mods.length} modalities
 					</p>
 					<div className="mt-1 flex justify-center">
-						<CopyQueryButton query={analysis.queryForSpec(record.spec)} />
+						<CopyQueryButton query={search.queryForSpec(record.spec)} />
 					</div>
 				</div>
 
@@ -204,10 +208,10 @@ export function AnalysisScreen({
 													{m.counts.c}
 												</td>
 												<td className="px-2 py-2 text-right font-medium tabular-nums">
-													{fmtDPrime(m.sdt.dPrime)}
+													{fmtDPrime(m.sdt?.dPrime)}
 												</td>
 												<td className="py-2 pl-2 text-right tabular-nums text-muted-foreground">
-													{Number.isFinite(m.sdt.criterion)
+													{m.sdt && Number.isFinite(m.sdt.criterion)
 														? m.sdt.criterion.toFixed(2)
 														: "—"}
 												</td>

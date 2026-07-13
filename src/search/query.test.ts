@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import * as game from "@/game";
-import * as analysis from "@/analysis";
+import * as search from "@/search";
 
 const TIMING: game.TimingConfig = {
 	respondingDuration: 2000,
 	feedbackDuration: 500,
 };
 
-/** A bare structural SessionSpec; only the fields the query reads matter. */
+/** bare structural SessionSpec; only query-read fields matter */
 function spec(
 	n: number,
 	mods: readonly { mod: game.ModID; opts: readonly string[] }[],
@@ -24,17 +24,17 @@ function spec(
 }
 
 const match = (q: string, s: game.SessionSpec) =>
-	analysis.matchesQuery(s, analysis.parseQuery(q));
+	search.matchesQuery(s, search.parseQuery(q));
 
 describe("parseQuery", () => {
 	test("flags malformed tokens but keeps valid ones", () => {
-		const tokens = analysis.parseQuery("n:2 bogus:x color:* n:notnum");
+		const tokens = search.parseQuery("n:2 bogus:x color:* n:notnum");
 		const kinds = tokens.map((t) => t.kind);
 		expect(kinds).toEqual(["scalar", "error", "mod", "error"]);
 	});
 
 	test("empty query → no tokens", () => {
-		expect(analysis.parseQuery("   ")).toEqual([]);
+		expect(search.parseQuery("   ")).toEqual([]);
 	});
 });
 
@@ -93,8 +93,8 @@ describe("matchesQuery — scalars", () => {
 	});
 
 	test("empty-endpoint ranges are errors, not silent filters", () => {
-		expect(analysis.parseQuery("n:..5")[0]?.kind).toBe("error");
-		expect(analysis.parseQuery("n:5..")[0]?.kind).toBe("error");
+		expect(search.parseQuery("n:..5")[0]?.kind).toBe("error");
+		expect(search.parseQuery("n:5..")[0]?.kind).toBe("error");
 		expect(match("n:5..", s)).toBe(true); // error ignored, not range [5,0] (never)
 	});
 
@@ -110,10 +110,9 @@ describe("defaultQuery", () => {
 			{ mod: game.MOD_POSITION, opts: ["r0c0", "r0c1"] },
 			{ mod: game.MOD_COLOR, opts: ["red", "green"] },
 		]);
-		const q = analysis.defaultQuery(s);
+		const q = search.defaultQuery(s);
 		expect(q).toBe("n:2 pos:* color:*");
 		expect(match(q, s)).toBe(true);
-		// a different protocol must not match it
 		expect(match(q, spec(2, [{ mod: game.MOD_COLOR, opts: ["red", "green"] }]))).toBe(
 			false,
 		);
@@ -130,7 +129,7 @@ describe("queryForSpec", () => {
 			],
 			{ matchProbability: 0.3 },
 		);
-		const q = analysis.queryForSpec(s);
+		const q = search.queryForSpec(s);
 		expect(q).toContain("n:3");
 		expect(q).toContain("color:red,green,blue");
 		expect(q).toContain("char:A,B");

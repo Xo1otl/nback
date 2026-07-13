@@ -1,4 +1,4 @@
-/** One SVG carrying shape/color/character/animation channels; position handled by parent, audio never drawn. */
+/** shape/color/character/animation channels; position handled by parent, audio never drawn. */
 
 import * as game from "@/game";
 import { ShapeBody } from "@/components/ShapeBody";
@@ -23,8 +23,7 @@ export function CompositeStimulus({
 
 	const kind = shapeKind(shape);
 	const isRotate = anim === game.ANIMATION_ROTATION;
-	// The triangle's areal center sits below its bounding-box center, so nudge
-	// the glyph down to keep it inside the slanted edges.
+	// triangle areal center below bbox center → nudge glyph down inside slanted edges.
 	const glyphY = kind === "triangle" ? 59 : 50;
 
 	const glyph = char !== undefined && (

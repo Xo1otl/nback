@@ -1,14 +1,14 @@
-/** Focal Stage: position lattice + composite stimulus in active cell. HAZARD: show live stimulus only while running; idle shows neutral token, never the real trial-0 stimulus (leak). */
+/** HAZARD: show live stimulus only while running; idle → neutral token, never real trial-0 stimulus (leak). */
 
 import { Volume2 } from "lucide-react";
 
 import type * as driver from "@/driver";
 import * as game from "@/game";
 import { CompositeStimulus } from "@/components/game/CompositeStimulus";
-import { parsePosition } from "@/lib/modalityTheme";
 import { cn } from "@/lib/utils";
 
-export type Grid = { rows: number; cols: number; enabled: boolean };
+// null = no position modality
+export type Grid = { rows: number; cols: number } | null;
 
 function StimulusContent({
 	stimulus,
@@ -33,12 +33,13 @@ export function Stage({
 	snapshot,
 	grid,
 	audioEnabled,
-	speakPulse,
+	speakTrial,
 }: {
 	snapshot: driver.SessionSnapshot;
 	grid: Grid;
 	audioEnabled: boolean;
-	speakPulse: number;
+	// trial index of last spoken stimulus; -1 = none yet
+	speakTrial: number;
 }) {
 	const { status, phase, scored, stimulus } = snapshot;
 	const liveStim = status === "running" ? stimulus : undefined;
@@ -46,7 +47,7 @@ export function Stage({
 	const memorize = status === "running" && phase === "responding" && !scored;
 
 	const active = liveStim
-		? parsePosition(game.trialStimulusValue(liveStim, game.MOD_POSITION))
+		? game.parsePosition(game.trialStimulusValue(liveStim, game.MOD_POSITION))
 		: null;
 	const cellContent = liveStim ? (
 		<StimulusContent stimulus={liveStim} dim={dim} />
@@ -55,8 +56,7 @@ export function Stage({
 	return (
 		<div
 			className={cn(
-				// Constant 2px border width so the memorize→scored toggle changes
-				// only color/style, never layout (avoids a 1px grid reflow).
+				// Constant 2px border: memorize→scored changes color only, no layout reflow.
 				"relative aspect-square w-full overflow-hidden rounded-xl border-2 border-border bg-card/40",
 				memorize && "border-dashed border-muted-foreground/40",
 			)}
@@ -67,7 +67,7 @@ export function Stage({
 				</div>
 			)}
 
-			{grid.enabled ? (
+			{grid ? (
 				<div
 					className="grid size-full gap-1.5 p-2"
 					style={{
@@ -104,10 +104,10 @@ export function Stage({
 
 			{audioEnabled && (
 				<Volume2
-					key={speakPulse}
+					key={speakTrial}
 					className={cn(
 						"absolute bottom-3 left-3 size-4 text-muted-foreground/50",
-						speakPulse >= 0 && "chrome-pulse",
+						speakTrial >= 0 && "chrome-pulse",
 					)}
 					aria-hidden
 				/>

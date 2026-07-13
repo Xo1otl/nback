@@ -3,6 +3,7 @@ import { Trash2 } from "lucide-react";
 
 import type * as game from "@/game";
 import * as analysis from "@/analysis";
+import * as search from "@/search";
 import * as storage from "@/storage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +20,7 @@ import {
 import { Shell } from "@/components/Shell";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { DeltaChip } from "@/components/history/DeltaChip";
-import { DPrimeTrend } from "@/components/history/TrendChart";
+import { DPrimeTrend, finiteTrend } from "@/components/history/DPrimeTrend";
 import { SearchBar } from "@/components/history/SearchBar";
 import { PeriodFilter, withinPeriod, type PeriodKey } from "@/components/history/PeriodFilter";
 import { SessionRow } from "@/components/history/SessionRow";
@@ -28,7 +29,6 @@ import { fmtDPrime, meanDPrime } from "@/lib/score";
 
 const NO_MATCH = "No sessions match this search.";
 
-/** Screen 5 — token search over saved sessions; renders a d′ trend + flat list. */
 export function HistoryScreen({
 	onBack,
 	onSelect,
@@ -37,7 +37,7 @@ export function HistoryScreen({
 }: {
 	onBack: () => void;
 	onSelect: (record: game.SessionRecord) => void;
-	/** Owned + persisted by App; survives reload. */
+	// owned + persisted by App; survives reload
 	query: string;
 	onQueryChange: (query: string) => void;
 }) {
@@ -52,11 +52,11 @@ export function HistoryScreen({
 		}));
 	}, [reload]);
 
-	const tokens = useMemo(() => analysis.parseQuery(query), [query]);
+	const tokens = useMemo(() => search.parseQuery(query), [query]);
 	// trend reads matching as-is (chronological); list reverses for newest-first
 	const matching = all.filter(
 		(p) =>
-			analysis.matchesQuery(p.record.spec, tokens) &&
+			search.matchesQuery(p.record.spec, tokens) &&
 			withinPeriod(p.record.createdAt, period, now),
 	);
 	const filtered = matching.length < all.length;
@@ -71,14 +71,12 @@ export function HistoryScreen({
 				body: `This permanently removes all ${all.length} saved sessions. This can’t be undone.`,
 				confirm: "Clear all",
 			};
-	const finite = matching
-		.map((p) => p.dp)
-		.filter((d): d is number => d != null && Number.isFinite(d));
-	// INVARIANT: headline/delta/trend-dot share most-recent FINITE d′
-	const latestDp = finite.length ? finite[finite.length - 1]! : null;
+	// headline/delta/trend-dot share this one finite-d′ series → agreement by construction
+	const { total, series } = finiteTrend(matching);
+	const latestDp = series.length ? series[series.length - 1]!.dp : null;
 	const deltaDp =
-		finite.length >= 2
-			? finite[finite.length - 1]! - finite[finite.length - 2]!
+		series.length >= 2
+			? series[series.length - 1]!.dp - series[series.length - 2]!.dp
 			: null;
 
 	return (
@@ -163,7 +161,7 @@ export function HistoryScreen({
 									</div>
 								</div>
 								{matching.length >= 2 ? (
-									<DPrimeTrend points={matching} />
+									<DPrimeTrend total={total} series={series} />
 								) : (
 									<p className="text-xs text-muted-foreground">
 										{matching.length === 1

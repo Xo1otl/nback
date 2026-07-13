@@ -9,9 +9,7 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <title>n-back</title>
     <script>
-      // Apply the saved / OS theme before first paint to avoid a flash. Mirrors
-      // STORAGE_KEY + the resolution in src/lib/theme.ts — keep them in sync.
-      // The static class="dark" on <html> is the no-JS fallback.
+      // Pre-paint theme (anti-flash). Mirrors STORAGE_KEY + resolution in src/lib/theme.ts — keep in sync. class="dark" = no-JS fallback.
       (function () {
         try {
           var stored = localStorage.getItem("nback.theme.v1");

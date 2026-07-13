@@ -1,6 +1,3 @@
-// useSyncExternalStore binding over a module-level store for lib/theme.
-// system mode also tracks live OS prefers-color-scheme.
-
 import { useSyncExternalStore } from "react";
 
 import * as theme from "@/lib/theme";
@@ -17,7 +14,6 @@ function darkMediaQuery(): MediaQueryList | null {
 function subscribe(listener: () => void): () => void {
 	listeners.add(listener);
 	const mq = darkMediaQuery();
-	// system mode: reapply + re-render on OS flip
 	const onSystemChange = () => {
 		if (mode === "system") {
 			theme.applyResolvedTheme(theme.resolveTheme(mode));
@@ -36,7 +32,6 @@ function getSnapshot(): string {
 	return mode === "system" ? `system:${theme.resolveTheme(mode)}` : mode;
 }
 
-/** Set the theme preference: persist, apply to the DOM, and notify React. */
 export function setThemeMode(next: theme.ThemeMode): void {
 	mode = next;
 	theme.saveThemeMode(next);
@@ -48,7 +43,6 @@ export type UseThemeResult = {
 	readonly mode: theme.ThemeMode;
 	readonly resolved: theme.ResolvedTheme;
 	readonly setMode: (mode: theme.ThemeMode) => void;
-	/** Flip to the opposite of the currently *resolved* theme (an explicit choice). */
 	readonly toggle: () => void;
 };
 

@@ -1,5 +1,3 @@
-/** Ghost Back button + title + optional trailing action slot. */
-
 import type { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 
@@ -12,7 +10,6 @@ export function ScreenHeader({
 }: {
 	title: string;
 	onBack: () => void;
-	/** Trailing content pinned to the end of the row (e.g. a Clear button). */
 	action?: ReactNode;
 }) {
 	return (

@@ -14,11 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shell } from "@/components/Shell";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import {
-	MIN_OPTIONS,
-	OptionPicker,
-	ShapePicker,
-} from "@/components/config/OptionPicker";
+import { OptionPicker, ShapePicker } from "@/components/config/OptionPicker";
 import { ALL_MODS, modMeta } from "@/lib/modalities";
 import {
 	DEFAULT_POSITION_SHAPE,
@@ -120,7 +116,7 @@ function SliderField({
 	);
 }
 
-/** Per-mod option subset from `initial`, else canonical; position omitted → driven by shape picker. */
+// position omitted → driven by shape picker
 function initialModOptions(
 	initial: game.SessionConfig,
 ): Record<game.ModID, ReadonlySet<game.Option>> {
@@ -141,7 +137,7 @@ function initialShapeId(initial: game.SessionConfig): string {
 	);
 }
 
-/** Settings editor for next session (N, mods + option pools, timing). INVARIANT: no start action; Back commits edited config upward. */
+// INVARIANT: no start action; Back commits edited config upward
 export function ConfigScreen({
 	initial,
 	onBack,
@@ -168,7 +164,7 @@ export function ConfigScreen({
 		setSelected((prev) => {
 			const next = new Set(prev);
 			if (next.has(id)) {
-				if (next.size <= 1) return prev; // keep >= 1 modality enabled
+				if (next.size <= game.MIN_ENABLED_MODS) return prev;
 				next.delete(id);
 			} else {
 				next.add(id);
@@ -181,7 +177,7 @@ export function ConfigScreen({
 		setModOptions((prev) => {
 			const cur = new Set(prev[mod] ?? []);
 			if (cur.has(value)) {
-				if (cur.size <= MIN_OPTIONS) return prev; // keep |O_m| >= 2
+				if (cur.size <= game.MIN_OPTIONS_PER_MOD) return prev;
 				cur.delete(value);
 			} else {
 				cur.add(value);
@@ -190,7 +186,7 @@ export function ConfigScreen({
 		});
 	}
 
-	/** Resolve mod options: position from shape; others = picked subset in canonical order (INVARIANT: generation order-stable). */
+	// INVARIANT: subset in canonical order (generation order-stable)
 	function optionsFor(id: game.ModID): game.OptionList {
 		if (id === game.MOD_POSITION) {
 			const shape =
@@ -201,7 +197,7 @@ export function ConfigScreen({
 		return (game.CANONICAL_OPTIONS[id] ?? []).filter((o) => chosen.has(o));
 	}
 
-	/** Project form state → SessionConfig (valid by construction; see clamps + min-option/>=1-mod guards). */
+	// valid by construction: clamps + min-option/>=1-mod guards
 	function buildConfig(): game.SessionConfig {
 		return {
 			n,
@@ -293,7 +289,7 @@ export function ConfigScreen({
 							{ALL_MODS.map((id) => {
 								const meta = modMeta(id);
 								const on = selected.has(id);
-								const locked = on && selected.size <= 1;
+								const locked = on && selected.size <= game.MIN_ENABLED_MODS;
 								return (
 									<button
 										key={id}

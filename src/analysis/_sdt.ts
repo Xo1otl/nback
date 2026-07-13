@@ -1,14 +1,9 @@
 /**
- * Signal Detection Theory with log-linear correction (§Scoring).
- *
+ * SDT with log-linear correction (§Scoring). +0.5/+1 keeps HR,FAR in (0,1) so Z finite.
  *   HR  = (H + 0.5) / (H + M + 1)
  *   FAR = (F + 0.5) / (F + C + 1)
  *   d'  = Z(HR) - Z(FAR)
  *   c   = -(Z(HR) + Z(FAR)) / 2
- *
- * The +0.5 / +1 correction keeps HR, FAR strictly in (0, 1), so Z is always
- * finite. Z is the inverse standard-normal CDF; a default implementation
- * ({@link standardNormalQuantile}) is provided, and any other can be injected.
  */
 
 import type * as game from "@/game";
@@ -36,8 +31,7 @@ export function sdtFromCounts(c: ModCounts, q: StandardNormalQuantile): SDT {
 	};
 }
 
-// Peter Acklam's rational approximation of the inverse normal CDF.
-// Relative error < ~1.15e-9 across (0, 1).
+// Peter Acklam rational approx of inverse normal CDF; rel err <~1.15e-9 across (0,1).
 const A = [
 	-3.969683028665376e1, 2.209460984245205e2, -2.759285104469687e2,
 	1.38357751867269e2, -3.066479806614716e1, 2.506628277459239,
@@ -57,7 +51,6 @@ const D = [
 const P_LOW = 0.02425;
 const P_HIGH = 1 - P_LOW;
 
-/** Default Z(p): inverse CDF of the standard normal distribution. */
 export const standardNormalQuantile: StandardNormalQuantile = (
 	p: game.Probability,
 ): number => {

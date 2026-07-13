@@ -15,7 +15,7 @@ import type * as game from "@/game";
 import { modMeta, sortedModIds } from "@/lib/modalities";
 import { fmtDPrime } from "@/lib/score";
 
-/** HAZARD: open + delete are sibling buttons, not nested — a <button> can't nest in a <button>. */
+// HAZARD: open + delete siblings, not nested — <button> can't nest in <button>
 export function SessionRow({
 	scored,
 	onSelect,

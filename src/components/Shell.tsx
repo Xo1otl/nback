@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-/** Full-viewport app frame; screens control their own inner layout. */
 export function Shell({
 	children,
 	className,

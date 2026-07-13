@@ -4,11 +4,23 @@ import { fmtDPrime } from "@/lib/score";
 
 const TREND_HEIGHT = 96;
 
-/** INVARIANT: i = index into full points list → blank sessions leave a gap. */
-type TrendPoint = { readonly i: number; readonly dp: number; readonly createdAt: number };
+// i = index into full points list → blank sessions leave a gap
+export type TrendPoint = { readonly i: number; readonly dp: number; readonly createdAt: number };
 
-/** Inner SVG of the d′ trend. Assumes measured width and ≥2 finite points. */
-function TrendChart({
+export type FiniteTrend = { readonly total: number; readonly series: readonly TrendPoint[] };
+
+// SSOT for the finite-d′ series: headline, delta, and plotted dots read this one derivation.
+export function finiteTrend(points: readonly ScoredSession[]): FiniteTrend {
+	const series = points.flatMap((p, i) =>
+		p.dp != null && Number.isFinite(p.dp)
+			? [{ i, dp: p.dp, createdAt: p.record.createdAt }]
+			: [],
+	);
+	return { total: points.length, series };
+}
+
+// assumes measured width and ≥2 finite points
+function TrendSvg({
 	width,
 	total,
 	series,
@@ -101,17 +113,12 @@ function TrendChart({
 	);
 }
 
-export function DPrimeTrend({ points }: { points: readonly ScoredSession[] }) {
+export function DPrimeTrend({ total, series }: FiniteTrend) {
 	const [ref, width] = useElementWidth<HTMLDivElement>();
-	const series: TrendPoint[] = points.flatMap((p, i) =>
-		p.dp != null && Number.isFinite(p.dp)
-			? [{ i, dp: p.dp, createdAt: p.record.createdAt }]
-			: [],
-	);
 	return (
 		<div ref={ref} className="w-full" style={{ height: TREND_HEIGHT }}>
 			{width > 0 && series.length >= 2 && (
-				<TrendChart width={width} total={points.length} series={series} />
+				<TrendSvg width={width} total={total} series={series} />
 			)}
 		</div>
 	);

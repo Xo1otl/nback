@@ -1,15 +1,10 @@
 /**
- * The pure, deterministic session state machine (§States, §Events).
- *
- * No clock, no timers, no I/O: a driver dispatches each event with an absolute
- * `offset` (ms from Origin) and threads the returned {@link SessionState}.
- * The emitted events are the append-only log stored in a `SessionRecord`.
- *
- * INVARIANT: transitions ({@link closeTrial}, {@link nextTrial}) are total — out-of-phase returns event with state unchanged (no-op), never throws.
+ * Pure deterministic session state machine (§States, §Events). No clock/timers/I/O: driver supplies absolute offset (ms from Origin), threads returned SessionState; emitted events = append-only log in SessionRecord.
+ * INVARIANT: transitions total — out-of-phase = no-op (event, unchanged state), never throws.
  */
 
 import { generateStimuli } from "./_stimuli";
-import { validateAndResolveConfig } from "./_spec";
+import { ConfigError, validateAndResolveConfig } from "./_spec";
 import {
 	type Milliseconds,
 	type ModID,
@@ -23,6 +18,7 @@ import {
 	type StimulusTrace,
 	type TrialAdvanced,
 	type TrialClosed,
+	resultOf,
 	specMod,
 	totalTrials,
 } from "./_types";
@@ -33,16 +29,15 @@ export type StartedSession = {
 	readonly state: SessionState;
 };
 
-/**
- * Validate the config, generate the stimulus trace, and return the initial
- * state responding(0) with onset 0 (§Timing). Throws {@link ConfigError} on an
- * invalid config.
- */
+/** responding(0), onset 0 (§Timing). */
 export function startSession(
 	cfg: SessionConfig,
 	rng: RandomSource,
-): StartedSession {
+): StartedSession | ConfigError {
 	const spec = validateAndResolveConfig(cfg);
+	if (spec instanceof ConfigError) {
+		return spec;
+	}
 	const stimuli = generateStimuli(spec, rng);
 	const state: SessionState = {
 		phase: "responding",
@@ -58,9 +53,7 @@ export type RespondResult = {
 	readonly state: SessionState;
 };
 
-/**
- * Validate response → {@link Responded} event + next state (§Events). Accepted response folds into state.responses (last accepted per mod wins); non-accepted leaves state unchanged. Result/reason precedence: phase → scored → mod → window (see classifyResponse).
- */
+/** §Events. Accepted folds into responses (last accepted per mod wins); non-accepted → state unchanged. Precedence: phase → scored → mod → window. */
 export function respond(
 	spec: SessionSpec,
 	state: SessionState,
@@ -69,7 +62,7 @@ export function respond(
 	offset: Milliseconds,
 ): RespondResult {
 	const event = classifyResponse(spec, state, mod, action, offset);
-	if (event.result !== "accepted") {
+	if (resultOf(event.reason) !== "accepted") {
 		return { event, state };
 	}
 	return {
@@ -88,22 +81,22 @@ function classifyResponse(
 	const base = { type: "responded", offset, mod, action } as const;
 
 	if (state.phase !== "responding") {
-		return { ...base, result: "ignored", reason: "notResponding" };
+		return { ...base, reason: "notResponding" };
 	}
 	if (state.trial < spec.n) {
-		return { ...base, result: "ignored", reason: "memoTrial" };
+		return { ...base, reason: "memoTrial" };
 	}
 	if (specMod(spec, mod) === undefined) {
-		return { ...base, result: "rejected", reason: "modNotEnabled" };
+		return { ...base, reason: "modNotEnabled" };
 	}
 	const elapsed = offset - state.respondingOnset;
 	if (elapsed < 0 || elapsed > spec.timing.respondingDuration) {
-		return { ...base, result: "rejected", reason: "outsideWindow" };
+		return { ...base, reason: "outsideWindow" };
 	}
-	return { ...base, result: "accepted", reason: "" };
+	return { ...base, reason: "" };
 }
 
-/** Overwrite the final action for `mod`, preserving insertion order. */
+/** Overwrite mod's action, preserve insertion order. */
 function setResponse(
 	responses: readonly ModResponse[],
 	mod: ModID,
@@ -137,10 +130,7 @@ export type AdvancedTrial = {
 	readonly state: SessionState;
 };
 
-/**
- * feedback(t) -> responding(t+1) with respondingOnset = offset, or -> done
- * after the last trial. No-op in any other phase.
- */
+/** feedback(t) → responding(t+1) [onset=offset], or → done after last trial. No-op otherwise. */
 export function nextTrial(
 	spec: SessionSpec,
 	state: SessionState,

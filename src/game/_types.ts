@@ -1,35 +1,25 @@
-/**
- * Game data model. INVARIANT: no clock/timers; driver supplies all offsets (§Timing).
- * § refs → specs.md.
- */
-
-// ---- Scalar aliases (spec-level distinctions; structurally plain) ----
+/** Game data model. INVARIANT: no clock/timers; driver supplies offsets (§Timing). § refs → specs.md. */
 
 export type SessionID = string;
 export type TrialIndex = number;
 /** Milliseconds from Origin (§Timing). */
 export type Milliseconds = number;
-/** Wall-clock instant in epoch milliseconds (e.g. when a session was played). */
+/** Wall-clock epoch ms. */
 export type Timestamp = number;
 export type Probability = number;
-/** A modality option value (stable ID, compared by equality). */
+/** Modality option value; stable ID, compared by equality. */
 export type Option = string;
 export type RandomSeed = string;
-/** Modality identifier (open set; known mods listed as `MOD_*`). */
+/** Modality id; open set (known: MOD_*). */
 export type ModID = string;
 
 export type OptionList = readonly Option[];
-
-// ---- Closed enumerations (string-literal unions + named constants) ----
 
 export type ResponseAction = "engage" | "disengage";
 export const ACTION_ENGAGE: ResponseAction = "engage";
 export const ACTION_DISENGAGE: ResponseAction = "disengage";
 
 export type EventResult = "accepted" | "ignored" | "rejected";
-export const RESULT_ACCEPTED: EventResult = "accepted";
-export const RESULT_IGNORED: EventResult = "ignored";
-export const RESULT_REJECTED: EventResult = "rejected";
 
 export type ReasonCode =
 	| ""
@@ -37,23 +27,27 @@ export type ReasonCode =
 	| "memoTrial"
 	| "modNotEnabled"
 	| "outsideWindow";
-export const REASON_NONE: ReasonCode = "";
-export const REASON_NOT_RESPONDING: ReasonCode = "notResponding";
-export const REASON_MEMO_TRIAL: ReasonCode = "memoTrial";
-export const REASON_MOD_NOT_ENABLED: ReasonCode = "modNotEnabled";
-export const REASON_OUTSIDE_WINDOW: ReasonCode = "outsideWindow";
+
+/** Single result↔reason mapping; accepted ⇔ reason === "". Events persist reason only. */
+export function resultOf(reason: ReasonCode): EventResult {
+	switch (reason) {
+		case "":
+			return "accepted";
+		case "notResponding":
+		case "memoTrial":
+			return "ignored";
+		case "modNotEnabled":
+		case "outsideWindow":
+			return "rejected";
+	}
+}
 
 export type Phase = "responding" | "feedback" | "done";
-export const PHASE_RESPONDING: Phase = "responding";
-export const PHASE_FEEDBACK: Phase = "feedback";
-export const PHASE_DONE: Phase = "done";
-
-// ---- Configuration & resolved spec (§Configuration) ----
 
 export type TimingConfig = {
-	/** Driver-facing window length; bounds the valid `respond` offset (§Events). */
+	/** Bounds valid respond offset (§Events). */
 	readonly respondingDuration: Milliseconds;
-	/** Driver-only display duration of the feedback phase. */
+	/** Driver-only feedback display duration. */
 	readonly feedbackDuration: Milliseconds;
 };
 
@@ -63,7 +57,7 @@ export type ModConfig = {
 	readonly options: OptionList;
 };
 
-/** Raw, unvalidated input to {@link startSession}. */
+/** Raw, unvalidated input. */
 export type SessionConfig = {
 	readonly n: number;
 	readonly problemCount: number;
@@ -72,11 +66,7 @@ export type SessionConfig = {
 	readonly mods: readonly ModConfig[];
 };
 
-/**
- * Validated, resolved session parameters. Same shape as {@link SessionConfig}
- * but every invariant in §Configuration holds and every mod's options are
- * materialized (canonical defaults filled in).
- */
+/** Validated, resolved: §Configuration invariants hold, options materialized. */
 export type SessionSpec = {
 	readonly n: number;
 	readonly problemCount: number;
@@ -84,8 +74,6 @@ export type SessionSpec = {
 	readonly timing: TimingConfig;
 	readonly mods: readonly ModConfig[];
 };
-
-// ---- Stimuli (§Generation) ----
 
 export type ModStimulus = {
 	readonly mod: ModID;
@@ -97,10 +85,8 @@ export type TrialStimulus = {
 	readonly values: readonly ModStimulus[];
 };
 
-/** The full pre-generated stimulus sequence; length = totalTrials, by trial. */
+/** Pre-generated sequence; length = totalTrials, indexed by trial. */
 export type StimulusTrace = readonly TrialStimulus[];
-
-// ---- Session state machine (§States) ----
 
 export type ModResponse = {
 	readonly mod: ModID;
@@ -110,20 +96,17 @@ export type ModResponse = {
 export type SessionState = {
 	readonly phase: Phase;
 	readonly trial: TrialIndex;
-	/** Offset of the current responding-phase onset (0 at t=0, else nextTrial offset). */
+	/** Current responding onset; 0 at t=0, else nextTrial offset. */
 	readonly respondingOnset: Milliseconds;
 	/** Current-trial final action per mod; last accepted wins; absent→disengaged; reset on nextTrial. INVARIANT: event log is SSOT, this is its incremental view. */
 	readonly responses: readonly ModResponse[];
 };
-
-// ---- Events (§Events) — discriminated union; log is a typed `Event[]` ----
 
 export type Responded = {
 	readonly type: "responded";
 	readonly offset: Milliseconds;
 	readonly mod: ModID;
 	readonly action: ResponseAction;
-	readonly result: EventResult;
 	readonly reason: ReasonCode;
 };
 
@@ -139,24 +122,16 @@ export type TrialAdvanced = {
 
 export type Event = Responded | TrialClosed | TrialAdvanced;
 
-// ---- Session record (SSOT originator, §intro) ----
+export const SESSION_RECORD_VERSION = 5;
 
-export const SESSION_RECORD_VERSION = 4;
-
-/**
- * The single source of truth for a play-through: everything needed for
- * arbitrary post-hoc analysis, reconstruction, and projection (§intro). The
- * `analysis` package is a pure projection over this value.
- */
+/** SSOT for a play-through; analysis package is a pure projection over it (§intro). */
 export type SessionRecord = {
 	readonly version: number;
 	readonly id: SessionID;
 	readonly spec: SessionSpec;
 	readonly seed: RandomSeed;
 	readonly stimuli: StimulusTrace;
-	/** Wall-clock epoch ms when the play-through started (responding(0) onset);
-	 * event offsets are relative to it, so `createdAt + offset` ≈ each event's
-	 * wall-clock time. */
+	/** Wall-clock epoch ms at responding(0) onset; event offsets relative → createdAt + offset ≈ event wall time. */
 	readonly createdAt: Timestamp;
 	readonly events: readonly Event[];
 };
@@ -174,65 +149,57 @@ export function newSessionRecord(
 		id,
 		spec,
 		seed,
-		// HAZARD: copy; driver keeps mutating its live log after record() returns.
+		// HAZARD: copy; driver keeps mutating live log after record() returns.
 		stimuli: [...stimuli],
 		createdAt,
 		events: [...events],
 	};
 }
 
-// ---- Randomness (§Generation) ----
-
-/** Randomness for stimulus generation; float64→[0,1), intn(n)→[0,n). Seedable impl: {@link newRandomSource}. */
+/** float64→[0,1), intn(n)→[0,n). Seedable impl: {@link newRandomSource}. */
 export interface RandomSource {
 	float64(): number;
 	intn(n: number): number;
 }
-
-// ---- Derived helpers ----
 
 /** Total trials T = N + problemCount (§Trials). */
 export function totalTrials(spec: SessionSpec): number {
 	return spec.n + spec.problemCount;
 }
 
-/** Whether trial `t` is scored (t >= N) rather than a memorization trial (§Trials). */
+/** Scored trial: t >= N (§Trials). */
 export function isScoredTrial(spec: SessionSpec, t: TrialIndex): boolean {
 	return t >= spec.n && t < totalTrials(spec);
 }
 
-/** Look up a modality's resolved config, or `undefined` if not enabled. */
-export function specMod(spec: SessionSpec, id: ModID): ModConfig | undefined {
-	return spec.mods.find((m) => m.mod === id);
+export function specMod(spec: SessionSpec, mod: ModID): ModConfig | undefined {
+	return spec.mods.find((m) => m.mod === mod);
 }
 
-/** A trial stimulus's value for one modality, or `undefined` if absent. */
 export function trialStimulusValue(
 	t: TrialStimulus,
-	id: ModID,
+	mod: ModID,
 ): Option | undefined {
-	return t.values.find((v) => v.mod === id)?.value;
+	return t.values.find((v) => v.mod === mod)?.value;
 }
 
-/** The current trial's final accepted action for a modality (default disengage). */
-export function responseFor(state: SessionState, id: ModID): ResponseAction {
-	return state.responses.find((r) => r.mod === id)?.action ?? ACTION_DISENGAGE;
+/** Final accepted action for mod; default disengage. */
+export function responseFor(state: SessionState, mod: ModID): ResponseAction {
+	return state.responses.find((r) => r.mod === mod)?.action ?? ACTION_DISENGAGE;
 }
 
-/** Engaged-check over a response fold. SYNC: shared by SessionState + driver SessionSnapshot. */
-export function engagedIn(responses: readonly ModResponse[], id: ModID): boolean {
-	return responses.find((r) => r.mod === id)?.action === ACTION_ENGAGE;
+/** SYNC: shared by SessionState + driver SessionSnapshot. */
+export function engagedIn(responses: readonly ModResponse[], mod: ModID): boolean {
+	return responses.find((r) => r.mod === mod)?.action === ACTION_ENGAGE;
 }
 
-/** Whether a modality is currently engaged in the current trial. */
-export function isEngaged(state: SessionState, id: ModID): boolean {
-	return engagedIn(state.responses, id);
+export function isEngaged(state: SessionState, mod: ModID): boolean {
+	return engagedIn(state.responses, mod);
 }
 
-// ---- Scoring vocabulary (§Scoring) ----
 // SYNC: driver feedback + analysis projection both consume these.
 
-/** The SDT confusion-matrix cells. */
+/** SDT confusion-matrix cells. */
 export type Outcome = "H" | "M" | "F" | "C";
 /** Hit: match + engaged. */
 export const OUTCOME_HIT: Outcome = "H";
@@ -243,7 +210,6 @@ export const OUTCOME_FALSE_ALARM: Outcome = "F";
 /** Correct reject: no match + disengaged. */
 export const OUTCOME_CORRECT_REJECT: Outcome = "C";
 
-/** Classify a scored trial from whether it matched and whether it was engaged. */
 export function outcomeOf(matched: boolean, engaged: boolean): Outcome {
 	if (matched) {
 		return engaged ? OUTCOME_HIT : OUTCOME_MISS;
@@ -251,27 +217,19 @@ export function outcomeOf(matched: boolean, engaged: boolean): Outcome {
 	return engaged ? OUTCOME_FALSE_ALARM : OUTCOME_CORRECT_REJECT;
 }
 
-/** Whether the trial was a match (Hit or Miss). */
 export function outcomeIsMatch(o: Outcome): boolean {
 	return o === OUTCOME_HIT || o === OUTCOME_MISS;
 }
 
-/** Whether the final response state was engaged (Hit or FalseAlarm). */
 export function outcomeIsEngaged(o: Outcome): boolean {
 	return o === OUTCOME_HIT || o === OUTCOME_FALSE_ALARM;
 }
 
-/** Whether the response was correct (Hit or CorrectReject). */
 export function outcomeIsCorrect(o: Outcome): boolean {
 	return o === OUTCOME_HIT || o === OUTCOME_CORRECT_REJECT;
 }
 
-/**
- * The match rule (§Match): whether modality `mod` at trial `t` repeats its value
- * from the n-back lookback `t - n` (stable-ID equality). `undefined` when `t` is
- * a memorization trial (`t < n`) or either trial/value is absent — the trace is
- * dense by trial, so for a well-formed record this resolves for every scored t.
- */
+/** Match rule (§Match): mod at t repeats t-n value (stable-ID eq). undefined on memo trial (t<n) or absent trial/value. */
 export function matchAt(
 	stimuli: StimulusTrace,
 	n: number,
@@ -301,14 +259,12 @@ export function finalEngagedFrom(
 ): boolean {
 	let engaged = false;
 	for (const r of responded) {
-		if (r.mod === mod && r.result === RESULT_ACCEPTED) {
+		if (r.mod === mod && resultOf(r.reason) === "accepted") {
 			engaged = r.action === ACTION_ENGAGE;
 		}
 	}
 	return engaged;
 }
-
-// ---- Known modalities and their canonical option universes (§Modalities) ----
 
 export const MOD_POSITION: ModID = "position";
 export const MOD_COLOR: ModID = "color";
@@ -389,11 +345,7 @@ export const CANONICAL_ANIMATION: OptionList = [
 	ANIMATION_NONE,
 ];
 
-/**
- * Canonical universes used to validate enabled subsets (§Configuration).
- * `position` is intentionally absent: its coordinate IDs are grid-dependent
- * and free-form, so only the generic k >= 2 / uniqueness rules apply.
- */
+/** Validate enabled subsets (§Configuration). position intentionally absent: coords grid-dependent/free-form, only generic k>=2/uniqueness apply. */
 export const CANONICAL_OPTIONS: Readonly<Record<ModID, OptionList>> = {
 	[MOD_COLOR]: CANONICAL_COLOR,
 	[MOD_CHARACTER]: CANONICAL_CHARACTER,

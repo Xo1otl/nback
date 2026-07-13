@@ -1,5 +1,3 @@
-/** Pre-start overlay: what's being trained, the key legend, and Start. */
-
 import { Play } from "lucide-react";
 
 import type * as game from "@/game";
@@ -12,7 +10,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { modMeta } from "@/lib/modalities";
-import { KEY_FOR_MOD } from "@/lib/modalityTheme";
+import { KEY_FOR_MOD } from "@/lib/modKeys";
 
 export function ReadyOverlay({
 	mods,
@@ -33,10 +31,10 @@ export function ReadyOverlay({
 				<CardHeader>
 					<CardTitle>
 						{n}-back · {mods.length}{" "}
-						{mods.length === 1 ? "channel" : "channels"}
+						{mods.length === 1 ? "modality" : "modalities"}
 					</CardTitle>
 					<CardDescription>
-						Press a channel when its value repeats from {n} trials ago.
+						Press a modality when its value repeats from {n} trials ago.
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-col gap-4">

@@ -1,21 +1,15 @@
-/**
- * Curated cell arrangements for the position modality (`game` has no canonical
- * position set). Each is an `OptionList` of `r{row}c{col}` cells; grid extent is
- * derived via `gridDims`.
- */
-
 import * as game from "@/game";
 
 export type PositionShape = {
 	readonly id: string;
 	readonly label: string;
-	/** Cells the stimulus can occupy, as `r{row}c{col}` ids (k >= 2, unique). */
+	// r{row}c{col} cells; k>=2, unique
 	readonly options: game.OptionList;
 };
 
-const cell = (row: number, col: number): game.Option => `r${row}c${col}`;
+const cell = game.positionCell;
 
-/** Ordered hardest→easiest by cell count. 3x3 lattice. */
+// ordered hardest→easiest by cell count; 3x3 lattice
 export const POSITION_SHAPES: readonly PositionShape[] = [
 	{
 		id: "grid",
@@ -68,7 +62,6 @@ export const POSITION_SHAPES: readonly PositionShape[] = [
 
 export const DEFAULT_POSITION_SHAPE: PositionShape = POSITION_SHAPES[0]!;
 
-/** The shape whose cell set equals `options` (order-insensitive), or undefined. */
 export function matchPositionShape(
 	options: readonly game.Option[],
 ): PositionShape | undefined {

@@ -1,7 +1,3 @@
-/**
- * `storage` — local persistence of completed `game.SessionRecord`s.
- */
-
 export {
 	deleteSession,
 	deleteSessions,
@@ -9,4 +5,5 @@ export {
 	loadSessions,
 	saveHistoryQuery,
 	saveSession,
+	type SaveResult,
 } from "./_store";

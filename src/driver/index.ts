@@ -1,10 +1,3 @@
-/**
- * `driver` — framework-agnostic session runtime that drives the pure `game`
- * state machine over real time.
- *
- * Import as a namespace: `import * as driver from "@/driver"`.
- */
-
 export {
 	type SessionStatus,
 	type ModFeedback,

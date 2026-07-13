@@ -1,5 +1,3 @@
-/** Done/aborted closing overlay; accuracy deferred to analysis screen. */
-
 import { useEffect, useId, useRef } from "react";
 import { BarChart3, Home } from "lucide-react";
 
@@ -16,13 +14,15 @@ export function EndCard({
 	aborted,
 	n,
 	total,
-	onSeeResults,
+	notSaved,
+	onViewResults,
 	onHome,
 }: {
 	aborted: boolean;
 	n: number;
 	total: number;
-	onSeeResults: () => void;
+	notSaved: "quota" | "unavailable" | null;
+	onViewResults: () => void;
 	onHome: () => void;
 }) {
 	const titleId = useId();
@@ -47,7 +47,14 @@ export function EndCard({
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-col gap-3">
-					<Button ref={primaryRef} size="lg" onClick={onSeeResults}>
+					{notSaved !== null && (
+						<p role="alert" className="text-sm text-destructive">
+							{notSaved === "quota"
+								? "Not saved — storage is full."
+								: "Not saved — storage is unavailable."}
+						</p>
+					)}
+					<Button ref={primaryRef} size="lg" onClick={onViewResults}>
 						<BarChart3 /> {aborted ? "See partial results" : "See results"}
 					</Button>
 					<Button variant="ghost" onClick={onHome}>

@@ -1,13 +1,12 @@
 import { useId } from "react";
 import { Search, X } from "lucide-react";
 
-import type * as analysis from "@/analysis";
+import type * as search from "@/search";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 const PLACEHOLDER = "e.g. n:2 color:red,green char:* time:<2500";
 
-/** Query semantics live in `analysis`. */
 export function SearchBar({
 	query,
 	tokens,
@@ -16,7 +15,7 @@ export function SearchBar({
 	onChange,
 }: {
 	query: string;
-	tokens: readonly analysis.Token[];
+	tokens: readonly search.Token[];
 	matchCount: number;
 	total: number;
 	onChange: (query: string) => void;

@@ -1,6 +1,6 @@
 # Multiplex N-Back — Analysis
 
-Projection over the `game` session record (events + stimuli): per-trial judgments and per-mod session scores. Depends on `game`, never the reverse.
+Projection over the `game` session record (events + stimuli): per-trial judgments and per-mod session scores. Depends on `game`, never the reverse. Spec text search lives in `search`, not here.
 
 ## Scoring (Per Mod)
 
@@ -20,3 +20,5 @@ $$d' = Z(HR) - Z(FAR)$$
 $$c = -\frac{Z(HR) + Z(FAR)}{2}$$
 
 Z(x) is the inverse CDF of the standard normal distribution.
+
+$H + M + F + C = 0$ ⇒ no SDT (score carries no `sdt`): the correction repairs sparse cells, not absent data — a fabricated $d' = 0$ would be indistinguishable from genuine chance performance.

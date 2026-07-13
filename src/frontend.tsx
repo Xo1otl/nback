@@ -21,7 +21,7 @@ if (import.meta.hot) {
 	createRoot(elem).render(app);
 }
 
-// Prod-only SW register; dev would serve a stale cache.
+// Prod only; dev would serve stale cache.
 if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
 	window.addEventListener("load", () => {
 		navigator.serviceWorker.register("/sw.js").catch((err) => {

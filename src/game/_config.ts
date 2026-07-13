@@ -1,5 +1,4 @@
-/** Factory: standard six-modality config with a 3x3 position grid. */
-
+import { positionCell } from "./_position";
 import {
 	CANONICAL_ANIMATION,
 	CANONICAL_AUDIO,
@@ -18,22 +17,21 @@ import {
 	type TimingConfig,
 } from "./_types";
 
-const DEFAULT_GRID: readonly Option[] = [
-	"r0c0", "r0c1", "r0c2",
-	"r1c0", "r1c1", "r1c2",
-	"r2c0", "r2c1", "r2c2",
-];
+// 3x3 lattice
+const DEFAULT_GRID: readonly Option[] = [0, 1, 2].flatMap((row) =>
+	[0, 1, 2].map((col) => positionCell(row, col)),
+);
 
 export function defaultMultiplexConfig(
 	n: number,
 	problemCount: number,
-	match: Probability,
+	matchProbability: Probability,
 	timing: TimingConfig,
 ): SessionConfig {
 	return {
 		n,
 		problemCount,
-		matchProbability: match,
+		matchProbability,
 		timing,
 		mods: [
 			{ mod: MOD_POSITION, options: DEFAULT_GRID },

@@ -11,7 +11,6 @@ import {
 import { Shell } from "@/components/Shell";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-/** Screen 1 — entry / menu. */
 export function TopScreen({
 	onPlay,
 	onCustomize,

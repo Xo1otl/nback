@@ -11,13 +11,12 @@ const PERIODS: readonly { key: PeriodKey; label: string; days: number | null }[]
 	{ key: "90d", label: "90d", days: 90 },
 ];
 
-/** Is `createdAt` (epoch ms) within `period` ending at `now`. */
+// createdAt/now: epoch ms
 export function withinPeriod(createdAt: number, period: PeriodKey, now: number): boolean {
 	const days = PERIODS.find((p) => p.key === period)?.days;
 	return days == null || createdAt >= now - days * DAY;
 }
 
-/** Time-range narrowing for History view. */
 export function PeriodFilter({
 	value,
 	onChange,

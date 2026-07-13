@@ -1,13 +1,6 @@
-/**
- * `game` — pure, UI-framework-agnostic multiplex n-back game logic.
- *
- * Port of `contract-go/game`. The public surface below is the package API;
- * import it as a namespace: `import * as game from "@/game"`.
- */
+/** Pure, UI-framework-agnostic multiplex n-back game logic; public package surface. */
 
-// ---- Scalars, enums, constants, and the data model ----
 export {
-	// scalar aliases
 	type SessionID,
 	type TrialIndex,
 	type Milliseconds,
@@ -17,48 +10,30 @@ export {
 	type RandomSeed,
 	type ModID,
 	type OptionList,
-	// enums + constants
 	type ResponseAction,
 	ACTION_ENGAGE,
 	ACTION_DISENGAGE,
 	type EventResult,
-	RESULT_ACCEPTED,
-	RESULT_IGNORED,
-	RESULT_REJECTED,
 	type ReasonCode,
-	REASON_NONE,
-	REASON_NOT_RESPONDING,
-	REASON_MEMO_TRIAL,
-	REASON_MOD_NOT_ENABLED,
-	REASON_OUTSIDE_WINDOW,
+	resultOf,
 	type Phase,
-	PHASE_RESPONDING,
-	PHASE_FEEDBACK,
-	PHASE_DONE,
-	// config + spec
 	type TimingConfig,
 	type ModConfig,
 	type SessionConfig,
 	type SessionSpec,
-	// stimuli
 	type ModStimulus,
 	type TrialStimulus,
 	type StimulusTrace,
-	// state
 	type SessionState,
 	type ModResponse,
-	// events
 	type Responded,
 	type TrialClosed,
 	type TrialAdvanced,
 	type Event,
-	// record
 	SESSION_RECORD_VERSION,
 	type SessionRecord,
 	newSessionRecord,
-	// randomness
 	type RandomSource,
-	// derived helpers
 	totalTrials,
 	isScoredTrial,
 	specMod,
@@ -68,7 +43,6 @@ export {
 	engagedIn,
 	matchAt,
 	finalEngagedFrom,
-	// scoring vocabulary (shared by driver feedback + analysis projection)
 	type Outcome,
 	OUTCOME_HIT,
 	OUTCOME_MISS,
@@ -78,7 +52,6 @@ export {
 	outcomeIsMatch,
 	outcomeIsEngaged,
 	outcomeIsCorrect,
-	// known modalities + canonical universes
 	MOD_POSITION,
 	MOD_COLOR,
 	MOD_CHARACTER,
@@ -106,19 +79,15 @@ export {
 	CANONICAL_OPTIONS,
 } from "./_types";
 
-// ---- Randomness ----
 export { newRandomSource } from "./_rng";
-
-// ---- Config validation & resolution ----
-export { ConfigError, validateAndResolveConfig } from "./_spec";
-
-// ---- Default config factory ----
+export {
+	ConfigError,
+	MIN_ENABLED_MODS,
+	MIN_OPTIONS_PER_MOD,
+	validateAndResolveConfig,
+} from "./_spec";
 export { defaultMultiplexConfig } from "./_config";
-
-// ---- Stimulus generation ----
-export { generateStimuli } from "./_stimuli";
-
-// ---- Session state machine ----
+export { positionCell, parsePosition, positionGridDims } from "./_position";
 export {
 	type StartedSession,
 	type RespondResult,

@@ -1,8 +1,8 @@
-/** Shape geometry for one stimulus, SVG in a `0 0 100 100` viewBox. */
+// coords assume `0 0 100 100` viewBox
 
 import type { ShapeKind } from "@/lib/modalityTheme";
 
-// Theme-aware outline (--stim-outline in index.css): keeps a crisp edge in both themes.
+// --stim-outline (index.css): crisp edge both themes
 const OUTLINE = "var(--stim-outline)";
 
 export function ShapeBody({ kind, fill }: { kind: ShapeKind; fill: string }) {

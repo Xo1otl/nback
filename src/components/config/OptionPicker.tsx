@@ -1,18 +1,13 @@
-/** Config-screen pickers for a modality's stimulus pool: OptionPicker (multi-select chips) + ShapePicker (single-select position arrangements). */
-
 import { Volume2 } from "lucide-react";
 
 import * as game from "@/game";
 import { ShapeBody } from "@/components/ShapeBody";
 import { optionLabel } from "@/lib/modalities";
-import { fillFor, gridDims, shapeKind } from "@/lib/modalityTheme";
+import { fillFor, shapeKind } from "@/lib/modalityTheme";
 import type { PositionShape } from "@/lib/positionShapes";
 import { cn } from "@/lib/utils";
 
-/** The domain requires |O_m| >= 2 (see `game._spec`); mirror it in the UI. */
-export const MIN_OPTIONS = 2;
-
-/** In-game-accurate visual for one option value (null for text glyphs). */
+// null for text glyphs
 function OptionVisual({ mod, value }: { mod: game.ModID; value: game.Option }) {
 	if (mod === game.MOD_COLOR) {
 		return (
@@ -46,7 +41,7 @@ export function OptionPicker({
 	selected: ReadonlySet<game.Option>;
 	onToggle: (value: game.Option) => void;
 }) {
-	const atMin = selected.size <= MIN_OPTIONS;
+	const atMin = selected.size <= game.MIN_OPTIONS_PER_MOD;
 	return (
 		<div className="flex flex-wrap gap-1.5">
 			{options.map((value) => {
@@ -58,7 +53,11 @@ export function OptionPicker({
 						type="button"
 						aria-pressed={on}
 						aria-disabled={locked}
-						title={locked ? `Keep at least ${MIN_OPTIONS} selected` : undefined}
+						title={
+							locked
+								? `Keep at least ${game.MIN_OPTIONS_PER_MOD} selected`
+								: undefined
+						}
 						onClick={() => {
 							if (!locked) onToggle(value);
 						}}
@@ -76,7 +75,7 @@ export function OptionPicker({
 						</span>
 						{locked && (
 							<span className="sr-only">
-								Keep at least {MIN_OPTIONS} selected
+								Keep at least {game.MIN_OPTIONS_PER_MOD} selected
 							</span>
 						)}
 					</button>
@@ -87,7 +86,7 @@ export function OptionPicker({
 }
 
 function ShapePreview({ options }: { options: game.OptionList }) {
-	const { rows, cols } = gridDims(options);
+	const { rows, cols } = game.positionGridDims(options);
 	const active = new Set(options);
 	return (
 		<div
@@ -101,7 +100,7 @@ function ShapePreview({ options }: { options: game.OptionList }) {
 			{Array.from({ length: rows * cols }, (_, i) => {
 				const row = Math.floor(i / cols);
 				const col = i % cols;
-				const on = active.has(`r${row}c${col}`);
+				const on = active.has(game.positionCell(row, col));
 				return (
 					<span
 						key={i}

@@ -1,8 +1,8 @@
-/** Seedable {@link RandomSource}. INVARIANT: generateStimuli(spec, newRandomSource(seed)) is deterministic per (spec, seed). */
+/** INVARIANT: generateStimuli(spec, newRandomSource(seed)) deterministic per (spec, seed). */
 
 import type { RandomSeed, RandomSource } from "./_types";
 
-/** mulberry32 PRNG: fast, well-distributed 32-bit generator returning [0, 1). */
+/** mulberry32 PRNG → [0, 1). */
 function mulberry32(seed: number): () => number {
 	let a = seed >>> 0;
 	return () => {
@@ -13,7 +13,7 @@ function mulberry32(seed: number): () => number {
 	};
 }
 
-/** cyrb53-style string hash -> 32-bit unsigned seed. */
+/** cyrb53-style string hash → 32-bit unsigned. */
 function hashSeed(seed: RandomSeed): number {
 	let h1 = 0xdeadbeef;
 	let h2 = 0x41c6ce57;

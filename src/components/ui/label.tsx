@@ -2,12 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-/**
- * Dependency-free Label (the canonical shadcn new-york Label wraps
- * `@radix-ui/react-label`, which isn't a dependency here). A plain `<label>`
- * carries the same semantics for our static forms — clicking still focuses the
- * associated control via `htmlFor`.
- */
+/** Dependency-free: canonical shadcn Label wraps @radix-ui/react-label (not a dep here); plain <label> carries same htmlFor semantics. */
 function Label({ className, ...props }: React.ComponentProps<"label">) {
 	return (
 		<label

@@ -5,8 +5,7 @@
 
 :root {
 	--radius: 0.625rem;
-	/* Stimulus parity outline (see CompositeStimulus): a dark rim on the light
-	 * stage; the dark theme overrides it to a light rim below. */
+	/* Stimulus parity outline (see CompositeStimulus); dark theme overrides to light rim. */
 	--stim-outline: oklch(0 0 0 / 0.35);
 	--background: oklch(1 0 0);
 	--foreground: oklch(0.145 0 0);
@@ -123,12 +122,6 @@
 	}
 }
 
-/* ---------------------------------------------------------------------------
- * App-specific styles (the original Bun + React template demo). These live
- * alongside Tailwind/shadcn above. Plain global colors that the design tokens
- * now own (the former `:root` color/background) have been removed; component
- * styling that the markup still relies on is preserved.
- * ------------------------------------------------------------------------- */
 body {
 	font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 	line-height: 1.5;
@@ -279,15 +272,8 @@ body {
 	}
 }
 
-/* ---------------------------------------------------------------------------
- * Game stimulus + chrome motion.
- *
- * The animation MODALITY is scored task signal, so it must survive the global
- * reduced-motion kill above; all UI chrome motion must not. The `.stim-rm-keep`
- * marker + `!important` re-assertion below is placed AFTER the global rule on
- * purpose so the scored channel keeps moving (gentler variants) while chrome
- * stays still.
- * ------------------------------------------------------------------------- */
+/* Scored animation modality must survive global reduced-motion kill (above); chrome must not.
+ * .stim-rm-keep + !important below placed AFTER global RM rule on purpose. */
 @keyframes stim-blur {
 	0%, 100% { filter: blur(0); }
 	50% { filter: blur(2.4px); }
@@ -318,10 +304,7 @@ body {
 .stim-rotate { animation: stim-rotate 2.4s linear infinite; }
 .stim-none { /* static */ }
 
-/* Counter-rotation for the character glyph: when the rotation modality spins
- * the whole stimulus, the glyph spins back about its own center so the (also
- * scored) character channel stays upright and readable. Same duration/timing
- * as stim-rotate, reversed direction → net zero glyph rotation. */
+/* Glyph counter-rotate vs stim-rotate: same duration, reversed → net-zero, glyph stays upright/readable. */
 @keyframes stim-rotate-rev {
 	from { transform: rotate(0); }
 	to { transform: rotate(-360deg); }
@@ -332,8 +315,7 @@ body {
 	transform-origin: center;
 }
 
-/* Cosmetic remaining-time "tide": a width drain keyed (via React key) to each
- * responding onset. Purely decorative — the driver is the authoritative clock. */
+/* Decorative remaining-time "tide"; driver is authoritative clock, not this. */
 @keyframes tide {
 	from { transform: scaleX(1); }
 	to { transform: scaleX(0); }
@@ -343,7 +325,7 @@ body {
 	animation: tide linear forwards;
 }
 
-/* One-shot pulse confirming the audio cue fired (chrome — dies under RM). */
+/* Audio-cue pulse (chrome; dies under RM). */
 @keyframes chrome-pulse {
 	0% { opacity: 0.35; }
 	50% { opacity: 1; }
@@ -352,7 +334,7 @@ body {
 .chrome-pulse { animation: chrome-pulse 0.6s ease-out 1; }
 
 @media (prefers-reduced-motion: reduce) {
-	/* Keep the scored animation channel alive, gentler/slower. */
+	/* Scored channel survives RM, gentler. */
 	.stim-rm-keep.stim-blur { animation: stim-blur 2.6s ease-in-out infinite !important; }
 	.stim-rm-keep.stim-fly { animation: stim-fly 2.8s ease-in-out infinite !important; }
 	.stim-rm-keep.stim-scale { animation: stim-scale 2.6s ease-in-out infinite !important; }

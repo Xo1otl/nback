@@ -1,9 +1,7 @@
 /**
- * Stimulus generation (§Generation). Independent per modality and trial:
- *
- *  - t < N:  uniform from O_m.
- *  - t >= N: with probability p, copy the value at t - N (a "match");
- *            otherwise uniform from O_m \ {value at t - N} (a "non-match").
+ * Stimulus generation (§Generation), independent per modality/trial:
+ *   t < N:  uniform from O_m.
+ *   t >= N: prob p → copy value at t-N (match); else uniform from O_m \ {t-N value} (non-match).
  */
 
 import {
@@ -22,7 +20,7 @@ export function generateStimuli(
 	rng: RandomSource,
 ): StimulusTrace {
 	const total = totalTrials(spec);
-	// Per-mod history of drawn options, indexed by trial, for the t-N lookback.
+	// per-mod drawn history, by trial, for t-N lookback
 	const history = new Map<ModID, Option[]>();
 	for (const mc of spec.mods) {
 		history.set(mc.mod, []);

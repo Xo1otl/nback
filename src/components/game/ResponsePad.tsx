@@ -1,9 +1,4 @@
-/**
- * One per-modality engage/disengage toggle. Its pressed state is a pure
- * projection of `snapshot.responses` (never local optimistic state), so a press
- * the driver ignores (memorize trial, outside the window) never shows engaged.
- * During feedback it wears the outcome skin instead.
- */
+/** INVARIANT: pressed = pure projection of snapshot.responses (no local optimistic); ignored press never shows engaged. Feedback → outcome skin. */
 
 import type * as game from "@/game";
 import { modMeta } from "@/lib/modalities";
@@ -22,12 +17,9 @@ export function ResponsePad({
 	mod: game.ModID;
 	keyHint: string;
 	engaged: boolean;
-	/** Outside the scored responding window — input won't count. */
 	locked: boolean;
-	/** Present only during feedback on a scored trial. */
 	outcome: game.Outcome | undefined;
 	onToggle: () => void;
-	/** Layout classes supplied by the rail (flex sizing). */
 	className?: string;
 }) {
 	const meta = modMeta(mod);
@@ -38,14 +30,12 @@ export function ResponsePad({
 		<button
 			type="button"
 			aria-pressed={engaged}
-			// Keep the button in the tab order and AT tree while locked (no native
-			// `disabled`): clicks are already no-ops via the driver guard. The
-			// accessible name reflects the feedback outcome when one is shown.
+			// aria not native disabled: stay in tab order/AT tree while locked; clicks already no-op via driver guard.
 			aria-disabled={locked || undefined}
 			aria-label={
 				skin
-					? `${meta.label} channel — ${skin.word}`
-					: `${meta.label} channel — ${engaged ? "engaged" : "not engaged"}, key ${keyHint.toUpperCase()}`
+					? `${meta.label} modality — ${skin.word}`
+					: `${meta.label} modality — ${engaged ? "engaged" : "not engaged"}, key ${keyHint.toUpperCase()}`
 			}
 			onClick={onToggle}
 			className={cn(

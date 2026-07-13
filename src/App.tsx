@@ -12,9 +12,8 @@ import { HistoryScreen } from "@/components/HistoryScreen";
 import { TopScreen } from "@/components/TopScreen";
 import { newSessionId, randomSeed } from "@/lib/ids";
 import { defaultSessionConfig } from "@/lib/sessionConfig";
-import * as analysis from "@/analysis";
+import * as search from "@/search";
 
-/** Screen state machine. */
 type Screen =
 	| { k: "top" }
 	| { k: "config" }
@@ -27,30 +26,27 @@ type Screen =
 	| { k: "analysis"; record: game.SessionRecord }
 	| { k: "history" };
 
-/** Last saved config (SessionSpec is structurally a config) else default. */
 function initialConfig(): game.SessionConfig {
 	return storage.loadSessions().at(-1)?.spec ?? defaultSessionConfig();
 }
 
-/** Persisted query, else latest session's default query, else "" (all). */
 function initialHistoryQuery(): string {
 	const persisted = storage.loadHistoryQuery();
 	if (persisted !== null) return persisted;
 	const latest = storage.loadSessions().at(-1)?.spec;
-	return latest ? analysis.defaultQuery(latest) : "";
+	return latest ? search.defaultQuery(latest) : "";
 }
 
 export function App() {
 	const [screen, setScreen] = useState<Screen>({ k: "top" });
 	const [config, setConfig] = useState<game.SessionConfig>(initialConfig);
-	// History query — lifted + persisted; survives screen switch and reload.
 	const [historyQuery, setHistoryQuery] = useState<string>(initialHistoryQuery);
 	function changeHistoryQuery(next: string) {
 		setHistoryQuery(next);
 		storage.saveHistoryQuery(next);
 	}
 
-	// SYNC: index.html pre-paint applies theme before this re-applies.
+	// index.html applies theme pre-paint; this re-applies post-mount.
 	useEffect(() => {
 		theme.applyStoredTheme();
 	}, []);
@@ -73,7 +69,6 @@ export function App() {
 			return (
 				<ConfigScreen
 					initial={config}
-					// Back commits edited settings for next Play.
 					onBack={(cfg) => {
 						setConfig(cfg);
 						setScreen({ k: "top" });

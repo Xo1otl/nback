@@ -1,5 +1,3 @@
-/** Default browser {@link Clock}: performance.now() + Date.now() + setTimeout. */
-
 import type { Clock } from "./_types";
 
 export function browserClock(): Clock {

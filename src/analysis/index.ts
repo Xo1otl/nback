@@ -1,17 +1,3 @@
-/** `analysis` — pure projections over a `game.SessionRecord`. */
-
-export {
-	type Outcome,
-	OUTCOME_HIT,
-	OUTCOME_MISS,
-	OUTCOME_FALSE_ALARM,
-	OUTCOME_CORRECT_REJECT,
-	outcomeIsMatch,
-	outcomeIsEngaged,
-	outcomeIsCorrect,
-} from "@/game";
-
-// ---- Data model: judgments, counts, scores ----
 export {
 	type ModJudgment,
 	type TrialFeedback,
@@ -24,7 +10,6 @@ export {
 	type StandardNormalQuantile,
 } from "./_types";
 
-// ---- Signal Detection Theory ----
 export {
 	type CorrectedRates,
 	correctedRates,
@@ -32,18 +17,4 @@ export {
 	standardNormalQuantile,
 } from "./_sdt";
 
-// ---- Projections ----
-export {
-	projectTrialFeedback,
-	reconstructTrials,
-	projectSessionScore,
-} from "./_project";
-
-// ---- Session query (token search over a SessionSpec) ----
-export {
-	type Token,
-	parseQuery,
-	matchesQuery,
-	defaultQuery,
-	queryForSpec,
-} from "./_query";
+export { projectTrialFeedback, projectSessionScore } from "./_project";

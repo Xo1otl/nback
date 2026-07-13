@@ -1,11 +1,5 @@
-/**
- * Audio-modality playback: pre-rendered letter clips (`scripts/soundgen.py`, one
- * per `CANONICAL_AUDIO` letter) decoded once into a module-singleton Web Audio
- * graph and fired as buffer sources.
- *
- * HAZARD: a page reload resets the singleton, so the first trial can fire before
- * decode finishes — {@link playStimulus} defers such a play instead of dropping it.
- */
+// SYNC: clips pre-rendered by scripts/soundgen.py, one per CANONICAL_AUDIO letter.
+// HAZARD: page reload resets singleton → first trial may fire before decode; playStimulus defers such a play, not drops.
 
 import * as game from "@/game";
 
@@ -18,7 +12,6 @@ import urlL from "@/audio/L.mp3";
 import urlM from "@/audio/M.mp3";
 import urlO from "@/audio/O.mp3";
 
-/** Letter (an `audio` modality option) → bundled clip URL. */
 const SOUND_URL: Readonly<Record<game.Option, string>> = {
 	A: urlA,
 	B: urlB,
@@ -36,10 +29,9 @@ let ctx: AudioContext | null = null;
 const buffers = new Map<game.Option, AudioBuffer>();
 const active = new Set<AudioBufferSourceNode>();
 let decoding: Promise<void> | null = null;
-// Monotonic latest-play id; a deferred play bows out if a newer trial/stop won.
+// monotonic latest-play id; deferred play bows out if newer trial/stop won
 let playRequest = 0;
 
-/** Lazily create the shared AudioContext (null when Web Audio is unavailable). */
 function audioContext(): AudioContext | null {
 	if (typeof window === "undefined") return null;
 	const Ctor: AudioContextCtor | undefined =
@@ -51,7 +43,7 @@ function audioContext(): AudioContext | null {
 	return ctx;
 }
 
-/** Fetch + decode every clip into `buffers` (decode works on suspended ctx). */
+// decode works on suspended ctx
 async function decodeAll(context: AudioContext): Promise<void> {
 	await Promise.all(
 		Object.entries(SOUND_URL).map(async ([letter, url]) => {
@@ -59,16 +51,13 @@ async function decodeAll(context: AudioContext): Promise<void> {
 				const bytes = await (await fetch(url)).arrayBuffer();
 				buffers.set(letter, await context.decodeAudioData(bytes));
 			} catch {
-				// clip failed → that letter stays silent
+				// clip failed → letter stays silent
 			}
 		}),
 	);
 }
 
-/**
- * Resume the context and start decoding. MUST be called from the session-start
- * user gesture (browsers unlock audio only from a direct gesture). Idempotent.
- */
+// MUST be called from user gesture — browsers unlock audio only from direct gesture. Idempotent.
 export function warmUpAudio(): void {
 	const context = audioContext();
 	if (!context) return;
@@ -76,7 +65,6 @@ export function warmUpAudio(): void {
 	decoding ??= decodeAll(context);
 }
 
-/** Start a decoded clip on the (resumed) context, tracked so it can be stopped. */
 function fire(buffer: AudioBuffer): void {
 	if (!ctx) return;
 	const src = ctx.createBufferSource();
@@ -87,10 +75,6 @@ function fire(buffer: AudioBuffer): void {
 	src.start();
 }
 
-/**
- * Play a letter's clip; if still decoding, defer until ready unless a later
- * trial/stop supersedes. No-op if Web Audio unavailable or the clip failed.
- */
 export function playStimulus(letter: game.Option): void {
 	const request = ++playRequest;
 	const ready = buffers.get(letter);
@@ -99,20 +83,19 @@ export function playStimulus(letter: game.Option): void {
 		return;
 	}
 	void decoding?.then(() => {
-		if (request !== playRequest) return; // a newer trial / stop won the race
+		if (request !== playRequest) return; // newer trial/stop won the race
 		const buffer = buffers.get(letter);
 		if (buffer) fire(buffer);
 	});
 }
 
-/** Stop any in-flight clip (e.g. when the session ends or the screen unmounts). */
 export function stopAudio(): void {
-	playRequest++; // cancel any clip still waiting on decode
+	playRequest++; // cancel clip still waiting on decode
 	for (const src of active) {
 		try {
 			src.stop();
 		} catch {
-			// Already stopped/ended — fine.
+			// already stopped/ended
 		}
 	}
 	active.clear();

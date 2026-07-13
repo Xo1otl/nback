@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-// content-box width via ResizeObserver; ref + width.
 // HAZARD: width=0 on first unmeasured frame → reserve height at call site.
 export function useElementWidth<T extends HTMLElement>() {
 	const ref = useRef<T>(null);

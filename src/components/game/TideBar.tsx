@@ -1,9 +1,4 @@
-/**
- * A cosmetic remaining-time cue under the Stage: a bar that drains over the
- * responding window, restarted (via React `key`) on each responding onset. It
- * is decorative only — the driver owns the authoritative clock; if the two ever
- * disagree, the driver wins.
- */
+/** Cosmetic remaining-time cue; decorative only — driver owns authoritative clock. Restart via React key per responding onset. */
 
 export function TideBar({
 	trial,

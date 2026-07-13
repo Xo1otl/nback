@@ -1,4 +1,4 @@
-/** Light/dark switch; shows the icon of the theme you'd switch to. */
+// icon shows target theme, not current
 
 import { Moon, Sun } from "lucide-react";
 

@@ -1,4 +1,4 @@
-/** Top HUD: N, trial counter, progress track, scored/memorize indicator, Quit. INVARIANT: never show running score. */
+/** INVARIANT: never show running score. */
 
 import { X } from "lucide-react";
 

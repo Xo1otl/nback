@@ -1,5 +1,3 @@
-/** Presentation metadata for modalities; canonical IDs/options in `game`. */
-
 import type { ComponentType } from "react";
 import {
 	LayoutGrid,
@@ -58,12 +56,10 @@ const META: Record<string, ModMeta> = {
 	},
 };
 
-/** Display metadata for a modality; falls back to a sane default for unknowns. */
 export function modMeta(id: game.ModID): ModMeta {
 	return META[id] ?? { id, label: id, description: "", Icon: Sparkles };
 }
 
-/** Human label for one modality option value (used by the config pickers). */
 export function optionLabel(mod: game.ModID, value: game.Option): string {
 	switch (mod) {
 		case game.MOD_COLOR:
@@ -75,7 +71,6 @@ export function optionLabel(mod: game.ModID, value: game.Option): string {
 	}
 }
 
-/** The known modalities, in their canonical presentation order. */
 export const ALL_MODS: readonly game.ModID[] = [
 	game.MOD_POSITION,
 	game.MOD_COLOR,
@@ -85,7 +80,6 @@ export const ALL_MODS: readonly game.ModID[] = [
 	game.MOD_ANIMATION,
 ];
 
-/** `ids` in `ALL_MODS` order; unknowns sort last, lexical tiebreak (total/stable). */
 function modsInOrder(ids: readonly game.ModID[]): game.ModID[] {
 	const rank = (m: game.ModID): number => {
 		const i = ALL_MODS.indexOf(m);
@@ -96,7 +90,6 @@ function modsInOrder(ids: readonly game.ModID[]): game.ModID[] {
 	);
 }
 
-/** A spec's active modality ids in canonical order. */
 export function sortedModIds(spec: game.SessionSpec): game.ModID[] {
 	return modsInOrder(spec.mods.map((m) => m.mod));
 }

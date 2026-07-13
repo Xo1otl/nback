@@ -1,9 +1,10 @@
-/** Game screen — projection of driver snapshot. INVARIANT: driver owns all authority/timing; screen never runs a real timer. */
+/** INVARIANT: driver owns all authority/timing; screen never runs a real timer. */
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type * as driver from "@/driver";
 import * as game from "@/game";
+import type * as storage from "@/storage";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -27,20 +28,19 @@ import { ReadyOverlay } from "@/components/game/ReadyOverlay";
 import { ResponseRail } from "@/components/game/ResponseRail";
 import { Stage, type Grid } from "@/components/game/Stage";
 import { TideBar } from "@/components/game/TideBar";
-import { useDriverSnapshot, useGameSession } from "@/hooks/useSession";
+import { useDriverSnapshot, useGameSession } from "@/hooks/useGameSession";
 import { useGameKeyboard } from "@/hooks/useGameKeyboard";
 import { useStimulusAudio } from "@/hooks/useStimulusAudio";
 import { ALL_MODS, modMeta } from "@/lib/modalities";
-import { gridDims, outcomeSkin } from "@/lib/modalityTheme";
+import { outcomeSkin } from "@/lib/modalityTheme";
 import { warmUpAudio } from "@/lib/stimulusAudio";
 
 export type GameScreenProps = {
 	config: game.SessionConfig;
 	id: game.SessionID;
 	seed: game.RandomSeed;
-	/** Persist the terminal record (fires once on done/aborted/abandon). */
-	onPersist: (record: game.SessionRecord) => void;
-	/** Navigate to the analysis screen for this record. */
+	/** Fires once on terminal (done/aborted/abandon). */
+	onPersist: (record: game.SessionRecord) => storage.SaveResult;
 	onViewResults: (record: game.SessionRecord) => void;
 	onHome: () => void;
 };
@@ -84,7 +84,7 @@ function GameView({
 }: GameScreenProps & { driver: driver.SessionDriver }) {
 	const snapshot = useDriverSnapshot(sessionDriver);
 	const audioEnabled = game.specMod(config, game.MOD_AUDIO) != null;
-	const speakPulse = useStimulusAudio(snapshot, audioEnabled);
+	const speakTrial = useStimulusAudio(snapshot, audioEnabled);
 	const [confirmQuit, setConfirmQuit] = useState(false);
 
 	const enabledMods = useMemo(
@@ -93,8 +93,7 @@ function GameView({
 	);
 	const grid = useMemo<Grid>(() => {
 		const pos = game.specMod(config, game.MOD_POSITION);
-		if (!pos) return { rows: 1, cols: 1, enabled: false };
-		return { ...gridDims(pos.options), enabled: true };
+		return pos ? game.positionGridDims(pos.options) : null;
 	}, [config]);
 
 	const n = config.n;
@@ -114,7 +113,7 @@ function GameView({
 		warmUpAudio();
 		sessionDriver.start();
 	}
-	function seeResults() {
+	function viewResults() {
 		const record = sessionDriver.record();
 		if (record) onViewResults(record);
 	}
@@ -125,31 +124,39 @@ function GameView({
 		paused: confirmQuit,
 		onModToggle: toggle,
 		onStart: start,
-		onSeeResults: seeResults,
+		onViewResults: viewResults,
 		onQuit: () => setConfirmQuit(true),
 		onCancel: onHome,
 	});
 
 	const persisted = useRef(false);
+	const [notSaved, setNotSaved] = useState<"quota" | "unavailable" | null>(
+		null,
+	);
 	useEffect(() => {
 		if (terminal && !persisted.current) {
 			persisted.current = true;
 			const record = sessionDriver.record();
-			if (record) onPersist(record);
+			if (record) {
+				const saved = onPersist(record);
+				if (!saved.ok) setNotSaved(saved.reason);
+			}
 		}
 	}, [terminal, sessionDriver, onPersist]);
 
 	let ribbon = "";
 	if (status === "running") {
 		if (phase === "feedback" && snapshot.feedback) {
-			const correct = snapshot.feedback.filter((f) => f.correct).length;
+			const correct = snapshot.feedback.filter((f) =>
+				game.outcomeIsCorrect(f.outcome),
+			).length;
 			ribbon = `${correct} / ${snapshot.feedback.length} correct`;
 		} else if (phase === "responding" && !scored) {
 			ribbon = "Memorize — just watch";
 		}
 	}
 
-	// AT-only announcement; feedback is otherwise visual.
+	// AT-only; feedback otherwise visual.
 	let announce = "";
 	if (status === "running") {
 		if (phase === "feedback" && snapshot.feedback) {
@@ -157,7 +164,9 @@ function GameView({
 				(f) =>
 					`${modMeta(f.mod).label} ${outcomeSkin(f.outcome).word.toLowerCase()}`,
 			);
-			const correct = snapshot.feedback.filter((f) => f.correct).length;
+			const correct = snapshot.feedback.filter((f) =>
+				game.outcomeIsCorrect(f.outcome),
+			).length;
 			announce = `Feedback: ${parts.join(", ")}. ${correct} of ${snapshot.feedback.length} correct.`;
 		} else if (phase === "responding") {
 			announce = scored
@@ -201,7 +210,7 @@ function GameView({
 						snapshot={snapshot}
 						grid={grid}
 						audioEnabled={audioEnabled}
-						speakPulse={speakPulse}
+						speakTrial={speakTrial}
 					/>
 					<TideBar
 						trial={snapshot.trial}
@@ -228,7 +237,8 @@ function GameView({
 						aborted={status === "aborted"}
 						n={n}
 						total={total}
-						onSeeResults={seeResults}
+						notSaved={notSaved}
+						onViewResults={viewResults}
 						onHome={onHome}
 					/>
 				)}
